@@ -6,10 +6,9 @@ import {
   useMemo,
   useState,
 } from "react"
-import { useApi } from "@/context/api-context"
+import { authApi, resolveApiUrl, TOKEN_KEY } from "@/lib/api/client"
 
 const AuthContext = createContext(null)
-const TOKEN_KEY = "token"
 
 function decodeJwtPayload(token) {
   try {
@@ -29,12 +28,14 @@ function normalizeUser(rawUser, roleFromToken) {
   if (!rawUser) return null
 
   const role = rawUser.role || roleFromToken || null
+  const avatar = resolveApiUrl(rawUser.avatar)
 
   if (role === "business") {
     const name = rawUser.business_name || rawUser.owner_name || rawUser.email
     return {
       ...rawUser,
       role,
+      avatar,
       name,
     }
   }
@@ -43,6 +44,7 @@ function normalizeUser(rawUser, roleFromToken) {
     return {
       ...rawUser,
       role,
+      avatar,
       name: rawUser.name || rawUser.first_name || rawUser.email || "Admin",
     }
   }
@@ -53,12 +55,12 @@ function normalizeUser(rawUser, roleFromToken) {
   return {
     ...rawUser,
     role,
+    avatar,
     name: fullName || rawUser.email,
   }
 }
 
 export function AuthProvider({ children }) {
-  const api = useApi()
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -67,40 +69,37 @@ export function AuthProvider({ children }) {
     setUser(null)
   }, [])
 
-  const getCurrentUser = useCallback(
-    async (token) => {
-      const claims = decodeJwtPayload(token)
-      const role = claims?.role
+  const getCurrentUser = useCallback(async (token) => {
+    const claims = decodeJwtPayload(token)
+    const role = claims?.role
 
-      if (!role) {
-        throw new Error("Invalid authentication token.")
-      }
+    if (!role) {
+      throw new Error("Invalid authentication token.")
+    }
 
-      if (role === "regular") {
-        const me = await api.getRegularMe(token)
-        return normalizeUser(me, role)
-      }
+    if (role === "regular") {
+      const me = await authApi.getRegularMe(token)
+      return normalizeUser(me, role)
+    }
 
-      if (role === "business") {
-        const me = await api.getBusinessMe(token)
-        return normalizeUser(me, role)
-      }
+    if (role === "business") {
+      const me = await authApi.getBusinessMe(token)
+      return normalizeUser(me, role)
+    }
 
-      if (role === "admin") {
-        return normalizeUser(
-          {
-            id: claims.id,
-            role,
-            name: "Admin",
-          },
-          role
-        )
-      }
+    if (role === "admin") {
+      return normalizeUser(
+        {
+          id: claims.id,
+          role,
+          name: "Admin",
+        },
+        role
+      )
+    }
 
-      throw new Error("Unsupported user role.")
-    },
-    [api]
-  )
+    throw new Error("Unsupported user role.")
+  }, [])
 
   const restoreSession = useCallback(async () => {
     const token = localStorage.getItem(TOKEN_KEY)
@@ -127,7 +126,7 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(
     async (email, password) => {
-      const data = await api.login({ email, password })
+      const data = await authApi.login({ email, password })
       localStorage.setItem(TOKEN_KEY, data.token)
 
       try {
@@ -139,26 +138,20 @@ export function AuthProvider({ children }) {
         throw error
       }
     },
-    [api, clearSession, getCurrentUser]
+    [clearSession, getCurrentUser]
   )
 
   const logout = useCallback(() => {
     clearSession()
   }, [clearSession])
 
-  const registerRegular = useCallback(
-    async (payload) => {
-      return api.registerRegular(payload)
-    },
-    [api]
-  )
+  const registerRegular = useCallback(async (payload) => {
+    return authApi.registerRegular(payload)
+  }, [])
 
-  const registerBusiness = useCallback(
-    async (payload) => {
-      return api.registerBusiness(payload)
-    },
-    [api]
-  )
+  const registerBusiness = useCallback(async (payload) => {
+    return authApi.registerBusiness(payload)
+  }, [])
 
   const value = useMemo(
     () => ({

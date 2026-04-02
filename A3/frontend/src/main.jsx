@@ -1,12 +1,11 @@
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
-import { BrowserRouter, Route, Routes } from "react-router"
+import { BrowserRouter, Route, Routes } from "react-router-dom"
 
 import "./index.css"
 import { Landing } from "@/pages/public/landing.jsx"
 import Layout from "@/layouts/layout"
 import { AuthProvider } from "@/context/auth-context.jsx"
-import { ApiProvider } from "@/context/api-context.jsx"
 import { RegularRegister } from "./pages/user/regular/register"
 import { BusinessRegister } from "./pages/user/business/register"
 import { Login } from "./pages/auth/login"
@@ -28,36 +27,33 @@ const NotFound = () => {
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-      <ApiProvider>
-        <AuthProvider>
-          <Routes>
-            <Route element={<Layout />}>
-              <Route path="/" element={<Landing />} />
+      <AuthProvider>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route path="/" element={<Landing />} />
 
-              <Route path="/profile" element={<CommonProfile />} />
+            <Route path="/profile" element={<CommonProfile />} />
 
-              <Route element={<ProtectedRoute />} allowedRoles={["regular"]}>
-                <Route path="/profile/regular" element={<RegularProfile />} />
-              </Route>
-
-              <Route element={<ProtectedRoute />} allowedRoles={["business"]}>
-                <Route path="/profile/business" element={<BusinessProfile />} />
-              </Route>
-
-              <Route element={<ProtectedRoute />} allowedRoles={["admin"]}>
-                <Route path="/profile/admin" element={<AdminProfile />} />
-              </Route>
+            <Route element={<ProtectedRoute />} allowedRoles={["regular"]}>
+              <Route path="/profile/regular" element={<RegularProfile />} />
             </Route>
 
-            {/* Auth routes */}
-            <Route path="/register/regular" element={<RegularRegister />} />
-            <Route path="/register/business" element={<BusinessRegister />} />
-            <Route path="/login" element={<Login />} />
+            <Route element={<ProtectedRoute />} allowedRoles={["business"]}>
+              <Route path="/profile/business" element={<BusinessProfile />} />
+            </Route>
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </ApiProvider>
+            <Route element={<ProtectedRoute />} allowedRoles={["admin"]}>
+              <Route path="/profile/admin" element={<AdminProfile />} />
+            </Route>
+          </Route>
+
+          <Route path="/register/regular" element={<RegularRegister />} />
+          <Route path="/register/business" element={<BusinessRegister />} />
+          <Route path="/login" element={<Login />} />
+
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>
 )

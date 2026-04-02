@@ -1,6 +1,7 @@
 "use strict";
 
 const express = require("express");
+const cors = require("cors");
 const { expressjwt: jwt } = require("express-jwt");
 const { addRoute } = require("./utils/add_route.js");
 const { updateLastActive } = require("./middleware/update_last_active.js");
@@ -32,6 +33,13 @@ const {
 
 function create_app() {
   const app = express();
+    const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+  ].filter(Boolean);
+
+  app.use(cors({ allowedOrigins}));
   app.use(express.json());
 
   // System

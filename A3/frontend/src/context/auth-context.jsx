@@ -1,98 +1,178 @@
-import React, { createContext, useContext, useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
+import { useApi } from "@/context/api-context"
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 const AuthContext = createContext(null)
+const TOKEN_KEY = "token"
 
-export const AuthProvider = ({ children }) => {
-  const navigate = useNavigate()
-  const [user, setUser] = useState({ role: "admin" })
+function decodeJwtPayload(token) {
+  try {
+    const [, payload] = token.split(".")
+    if (!payload) return null
 
-  useEffect(() => {
-    // TODO: Update fetch for A3
-    const key = localStorage.getItem("token")
-    async function get_user() {
-      const res = await fetch(BACKEND_URL + "/user/me", {
-        headers: {
-          Authorization: `Bearer ${key}`,
-        },
-      })
-      if (res.status === 200) {
-        const usr = await res.json()
-        setUser(usr.user)
-      } else {
-        const err = await res.json()
-        return err.message
-      }
-    }
-    if (key) get_user()
-    else setUser(null)
-  }, [])
-
-  const logout = () => {
-    localStorage.removeItem("token")
-    setUser(null)
-    navigate("/")
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/")
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=")
+    const decoded = atob(padded)
+    return JSON.parse(decoded)
+  } catch {
+    return null
   }
-
-  const login = async (username, password) => {
-    // TODO: Update fetch for A3
-    const res = await fetch(BACKEND_URL + "/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        username: username,
-        password: password,
-      }),
-    })
-    if (res.status === 200) {
-      const data = await res.json()
-      localStorage.setItem("token", data.token)
-
-      const userRes = await fetch(BACKEND_URL + "/user/me", {
-        headers: {
-          Authorization: `Bearer ${data.token}`,
-        },
-      })
-
-      const userData = await userRes.json()
-      setUser(userData.user)
-
-      navigate("/profile")
-    } else {
-      const err = await res.json()
-      return err.message
-    }
-  }
-
-  const register = async (userData) => {
-    // TODO: Update fetch for A3
-    const res = await fetch(BACKEND_URL + "/register", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        ...userData,
-      }),
-    })
-    if (res.status === 201) {
-      navigate("/success")
-    } else {
-      const err = await res.json()
-      return err.message
-    }
-  }
-
-  return (
-    <AuthContext.Provider value={{ user, login, logout, register }}>
-      {children}
-    </AuthContext.Provider>
-  )
 }
 
-export const useAuth = () => {
-  return useContext(AuthContext)
+function normalizeUser(rawUser, roleFromToken) {
+  if (!rawUser) return null
+
+  const role = rawUser.role || roleFromToken || null
+
+  if (role === "business") {
+    const name = rawUser.business_name || rawUser.owner_name || rawUser.email
+    return {
+      ...rawUser,
+      role,
+      name,
+    }
+  }
+
+  if (role === "admin") {
+    return {
+      ...rawUser,
+      role,
+      name: rawUser.name || rawUser.first_name || rawUser.email || "Admin",
+    }
+  }
+
+  const fullName = [rawUser.first_name, rawUser.last_name].filter(Boolean).join(" ")
+  return {
+    ...rawUser,
+    role,
+    name: fullName || rawUser.email,
+  }
+}
+
+export function AuthProvider({ children }) {
+  const api = useApi()
+  const [user, setUser] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  const clearSession = useCallback(() => {
+    localStorage.removeItem(TOKEN_KEY)
+    setUser(null)
+  }, [])
+
+  const getCurrentUser = useCallback(
+    async (token) => {
+      const claims = decodeJwtPayload(token)
+      const role = claims?.role
+
+      if (!role) {
+        throw new Error("Invalid authentication token.")
+      }
+
+      if (role === "regular") {
+        const me = await api.getRegularMe(token)
+        return normalizeUser(me, role)
+      }
+
+      if (role === "business") {
+        const me = await api.getBusinessMe(token)
+        return normalizeUser(me, role)
+      }
+
+      if (role === "admin") {
+        return normalizeUser(
+          {
+            id: claims.id,
+            role,
+            name: "Admin",
+          },
+          role
+        )
+      }
+
+      throw new Error("Unsupported user role.")
+    },
+    [api]
+  )
+
+  const restoreSession = useCallback(async () => {
+    const token = localStorage.getItem(TOKEN_KEY)
+
+    if (!token) {
+      setUser(null)
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      const currentUser = await getCurrentUser(token)
+      setUser(currentUser)
+    } catch {
+      clearSession()
+    } finally {
+      setIsLoading(false)
+    }
+  }, [clearSession, getCurrentUser])
+
+  useEffect(() => {
+    restoreSession()
+  }, [restoreSession])
+
+  const login = useCallback(
+    async (email, password) => {
+      const data = await api.login({ email, password })
+      localStorage.setItem(TOKEN_KEY, data.token)
+
+      try {
+        const currentUser = await getCurrentUser(data.token)
+        setUser(currentUser)
+        return currentUser
+      } catch (error) {
+        clearSession()
+        throw error
+      }
+    },
+    [api, clearSession, getCurrentUser]
+  )
+
+  const logout = useCallback(() => {
+    clearSession()
+  }, [clearSession])
+
+  const registerRegular = useCallback(
+    async (payload) => {
+      return api.registerRegular(payload)
+    },
+    [api]
+  )
+
+  const registerBusiness = useCallback(
+    async (payload) => {
+      return api.registerBusiness(payload)
+    },
+    [api]
+  )
+
+  const value = useMemo(
+    () => ({
+      user,
+      isLoading,
+      login,
+      logout,
+      registerRegular,
+      registerBusiness,
+      refreshUser: restoreSession,
+    }),
+    [user, isLoading, login, logout, registerRegular, registerBusiness, restoreSession]
+  )
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext)
+
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider")
+  }
+
+  return context
 }

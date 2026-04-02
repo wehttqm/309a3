@@ -1,21 +1,19 @@
 const { prisma } = require("../../../utils/prisma_client");
-
 const jwt = require("jsonwebtoken");
 
 const POST = async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    res.status(400).json({ error: "Invalid payload." });
-    return;
+    return res.status(400).json({ error: "Invalid payload." });
   }
 
   try {
     const user = await prisma.user.findUnique({
-      where: { email, password },
+      where: { email },
     });
 
-    if (!user) {
+    if (!user || user.password !== password) {
       return res
         .status(401)
         .json({ error: "Invalid email or password combination." });

@@ -24,7 +24,7 @@ async function GET(req, res) {
       avatar: business.avatar,
       biography: business.biography,
       activated: business.activated,
-      verified: business.isVerified,
+      verified: business.verified,
       createdAt: business.createdAt,
     };
 

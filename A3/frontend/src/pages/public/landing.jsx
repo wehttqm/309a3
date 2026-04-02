@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom"
+import { useAuth } from "@/context/auth-context"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -21,10 +22,143 @@ import {
 
 export const Landing = () => {
   const navigate = useNavigate()
+  const { user, isLoading } = useAuth()
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center text-muted-foreground">
+        Loading...
+      </div>
+    )
+  }
+
+  if (user?.role === "regular") {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <section className="mx-auto max-w-5xl px-6 py-16">
+          <Badge variant="secondary" className="mb-4">
+            Worker Dashboard
+          </Badge>
+
+          <h1 className="mb-3 text-4xl font-bold tracking-tight">
+            Welcome back{user.name ? `, ${user.name}` : ""}
+          </h1>
+
+          <p className="mb-8 max-w-2xl text-lg text-muted-foreground">
+            Manage your account, review your profile, and continue using the
+            staffing platform from your worker workspace.
+          </p>
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <Card className="flex flex-col">
+              <CardHeader>
+                <Users className="mb-2 h-8 w-8 text-primary" />
+                <CardTitle>My Profile</CardTitle>
+                <CardDescription>
+                  Review your worker information and keep your account details up
+                  to date.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="mt-auto">
+                <Button className="w-full" onClick={() => navigate("/profile")}>
+                  Go to Profile <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <ClipboardCheck className="mb-2 h-8 w-8 text-primary" />
+                <CardTitle>What you can do next</CardTitle>
+                <CardDescription>
+                  As more worker routes are added, this homepage can surface jobs,
+                  qualifications, invitations, and active work items.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        </section>
+      </div>
+    )
+  }
+
+  if (user?.role === "business") {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <section className="mx-auto max-w-5xl px-6 py-16">
+          <Badge variant="secondary" className="mb-4">
+            Business Dashboard
+          </Badge>
+
+          <h1 className="mb-3 text-4xl font-bold tracking-tight">
+            Welcome back{user.name ? `, ${user.name}` : ""}
+          </h1>
+
+          <p className="mb-8 max-w-2xl text-lg text-muted-foreground">
+            Manage your business account and prepare your staffing workflow from
+            your business workspace.
+          </p>
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <Card className="flex flex-col">
+              <CardHeader>
+                <Building2 className="mb-2 h-8 w-8 text-primary" />
+                <CardTitle>Business Profile</CardTitle>
+                <CardDescription>
+                  Review your business details and keep your organization profile
+                  current.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="mt-auto">
+                <Button
+                  className="w-full"
+                  onClick={() => navigate("/business/profile")}
+                >
+                  Go to Business Profile <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <Briefcase className="mb-2 h-8 w-8 text-primary" />
+                <CardTitle>What you can do next</CardTitle>
+                <CardDescription>
+                  Once business routes are mounted, this homepage can also surface
+                  job postings, candidate discovery, and negotiation activity.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        </section>
+      </div>
+    )
+  }
+
+  if (user?.role === "admin") {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        <section className="mx-auto max-w-5xl px-6 py-16">
+          <Badge variant="secondary" className="mb-4">
+            Administrator
+          </Badge>
+
+          <h1 className="mb-3 text-4xl font-bold tracking-tight">
+            Welcome back{user.name ? `, ${user.name}` : ""}
+          </h1>
+
+          <p className="max-w-2xl text-lg text-muted-foreground">
+            Your admin session is active. Mount your admin routes before adding
+            homepage shortcuts for qualification review, business verification,
+            and system configuration.
+          </p>
+        </section>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Hero */}
       <section className="mx-auto max-w-3xl px-6 py-20 text-center">
         <Badge variant="secondary" className="mb-4">
           Temporary Staffing Platform
@@ -55,7 +189,6 @@ export const Landing = () => {
 
       <Separator />
 
-      {/* How It Works */}
       <section className="mx-auto max-w-5xl px-6 py-16">
         <h2 className="mb-10 text-center text-2xl font-semibold">
           How It Works
@@ -96,7 +229,6 @@ export const Landing = () => {
 
       <Separator />
 
-      {/* Role Cards */}
       <section className="mx-auto max-w-5xl px-6 py-16">
         <h2 className="mb-10 text-center text-2xl font-semibold">
           Who Is This For?

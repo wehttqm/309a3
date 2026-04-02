@@ -6,6 +6,7 @@ import "./index.css"
 import { Landing } from "@/pages/public/landing.jsx"
 import Layout from "@/layouts/layout"
 import { AuthProvider } from "@/context/auth-context.jsx"
+import { ApiProvider } from "@/context/api-context.jsx"
 import { RegularRegister } from "./pages/user/regular/register"
 import { BusinessRegister } from "./pages/user/business/register"
 import { Login } from "./pages/auth/login"
@@ -22,23 +23,25 @@ const NotFound = () => {
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route path="/" element={<Landing />} />
+      <ApiProvider>
+        <AuthProvider>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route path="/" element={<Landing />} />
 
-            {/* Common user */}
-            <Route path="/profile" element={<Profile />} />
-          </Route>
+              {/* Common user */}
+              <Route path="/profile" element={<Profile />} />
+            </Route>
 
-          {/* Auth routes */}
-          <Route path="/register/regular" element={<RegularRegister />} />
-          <Route path="/register/business" element={<BusinessRegister />} />
-          <Route path="/login" element={<Login />} />
+            {/* Auth routes */}
+            <Route path="/register/regular" element={<RegularRegister />} />
+            <Route path="/register/business" element={<BusinessRegister />} />
+            <Route path="/login" element={<Login />} />
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </AuthProvider>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
+      </ApiProvider>
     </BrowserRouter>
   </StrictMode>
 )

@@ -1,0 +1,154 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  email     String   @unique
+  password  String
+
+  resetToken String   @default(uuid())
+  expiresAt  DateTime
+
+  // "regular", "business", "admin"
+  role String @default("regular")
+
+  activated  Boolean  @default(false)
+  suspended  Boolean  @default(false)
+  verified   Boolean  @default(false)
+  available  Boolean  @default(false)
+  lastActive DateTime @default(now())
+
+  // Regular user fields
+  first_name     String?
+  last_name      String?
+  phone_number   String?
+  postal_address String?
+  birthday       String?
+  avatar         String?
+  resume         String?
+  biography      String?
+
+  // Business-only fields
+  business_name String?
+  owner_name    String?
+  locationLat   Float?
+  locationLon   Float?
+
+  // Relations
+  qualifications Qualification[]
+  jobPostings    JobPosting[]    @relation("BusinessJobs")
+  filledJobs     JobPosting[]    @relation("UserCommitments")
+  negotiations   Negotiation[]
+  interests      Interest[]
+}
+
+model PositionType {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String
+  hidden      Boolean @default(true)
+
+  jobs           JobPosting[]
+  qualifications Qualification[]
+}
+
+model Qualification {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // "created", "submitted", "approved", "rejected", "revised"
+  status String @default("created")
+
+  note     String  @default("")
+  document String?
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  positionTypeId Int
+  positionType   PositionType @relation(fields: [positionTypeId], references: [id])
+
+  @@unique([userId, positionTypeId])
+}
+
+model JobPosting {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // "open", "filled", "completed", "canceled", "expired"
+  status String @default("open")
+
+  positionTypeId Int
+  positionType   PositionType @relation(fields: [positionTypeId], references: [id])
+
+  businessId Int
+  business   User @relation("BusinessJobs", fields: [businessId], references: [id])
+
+  filledByUserId Int?
+  filledByUser   User? @relation("UserCommitments", fields: [filledByUserId], references: [id])
+
+  salaryMin Float
+  salaryMax Float
+  startTime DateTime
+  endTime   DateTime
+  note      String?
+
+  negotiations Negotiation[]
+  interests    Interest[]
+}
+
+model Negotiation {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  expiresAt DateTime
+
+  // "active", "success", "failed", "expired"
+  status String @default("active")
+
+  jobId Int
+  job   JobPosting @relation(fields: [jobId], references: [id])
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  interestId Int?      @unique
+  interest   Interest? @relation(fields: [interestId], references: [id])
+
+  // null = no decision yet, "accept", "decline"
+  candidateDecision String?
+  businessDecision  String?
+}
+
+model Interest {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  jobId Int
+  job   JobPosting @relation(fields: [jobId], references: [id])
+
+  // null = no decision, true = interested, false = not interested / withdrawn
+  candidateInterested Boolean?
+  businessInterested  Boolean?
+
+  negotiation Negotiation?
+
+  @@unique([userId, jobId])
+}
+
+model SystemSetting {
+  key   String @id
+  value String
+}

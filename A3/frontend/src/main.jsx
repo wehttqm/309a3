@@ -9,11 +9,12 @@ import { AuthProvider } from "@/context/auth-context.jsx"
 import { RegularRegister } from "./pages/user/regular/register"
 import { BusinessRegister } from "./pages/user/business/register"
 import { Login } from "./pages/auth/login"
+import { Profile } from "./pages/user/common/profile"
 
 const NotFound = () => {
   return (
     <div className="flex h-screen w-full items-center justify-center text-2xl">
-      404
+      404 Not Found
     </div>
   )
 }
@@ -25,7 +26,12 @@ createRoot(document.getElementById("root")).render(
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<Landing />} />
+
+            {/* Common user */}
+            <Route path="/profile" element={<Profile />} />
           </Route>
+
+          {/* Auth routes */}
           <Route path="/register/regular" element={<RegularRegister />} />
           <Route path="/register/business" element={<BusinessRegister />} />
           <Route path="/login" element={<Login />} />

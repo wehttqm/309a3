@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-export const REGULARFIELDS = [
+export const ADMINFIELDS = [
   { label: "First Name", id: "first_name" },
   { label: "Last Name", id: "last_name" },
   { label: "Email", id: "email", type: "email" },
@@ -9,7 +9,7 @@ export const REGULARFIELDS = [
   { label: "Birthday", id: "birthday", type: "date" },
 ]
 
-export const regularProfileSchema = z.object({
+export const adminProfileSchema = z.object({
   first_name: z.string().min(1, "Required"),
   last_name: z.string().min(1, "Required"),
   email: z.email("Invalid email"),

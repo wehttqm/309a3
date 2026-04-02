@@ -1,7 +1,14 @@
 import { z } from "zod"
+import { Profile } from "@/components/profile"
 
-export const BUSINESSFIELDS = [{ label: "Email", id: "email", type: "email" }]
+const businessFields = [{ label: "Email", id: "email", type: "email" }]
 
-export const businessProfileSchema = z.object({
+const businessProfileSchema = z.object({
   email: z.email("Invalid email"),
 })
+
+export const BusinessProfile = () => {
+  return (
+    <Profile fields={businessFields} profileSchema={businessProfileSchema} />
+  )
+}

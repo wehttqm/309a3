@@ -1,6 +1,7 @@
 import { z } from "zod"
+import { Profile } from "@/components/profile"
 
-export const REGULARFIELDS = [
+export const regularFields = [
   { label: "First Name", id: "first_name" },
   { label: "Last Name", id: "last_name" },
   { label: "Email", id: "email", type: "email" },
@@ -18,3 +19,7 @@ export const regularProfileSchema = z.object({
   birthday: z.string().optional(),
   biography: z.string().max(500, "Max 500 chars").optional(),
 })
+
+export const RegularProfile = () => {
+  return <Profile fields={regularFields} profileSchema={regularProfileSchema} />
+}

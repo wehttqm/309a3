@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useAuth } from "@/context/auth-context.jsx"
 
 // UI Components
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -14,28 +14,15 @@ import { RoleBadge } from "@/components/role-badge"
 // Icons
 import { Pencil, Check, X } from "lucide-react"
 
-// Fields (from admin, regular, business)
-import { REGULARFIELDS, regularProfileSchema } from "../regular/profile.jsx"
-import { BUSINESSFIELDS, businessProfileSchema } from "../business/profile.jsx"
-import { ADMINFIELDS, adminProfileSchema } from "../admin/profile.jsx"
-
-export function Profile() {
+export function Profile({
+  fields,
+  profileSchema,
+}: {
+  fields: Array<object>
+  profileSchema: z.ZodObject
+}) {
   const { user } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
-
-  let fields = []
-  let profileSchema = z.object({})
-
-  if (user?.role === "regular") {
-    fields = REGULARFIELDS
-    profileSchema = regularProfileSchema
-  } else if (user?.role === "business") {
-    fields = BUSINESSFIELDS
-    profileSchema = businessProfileSchema
-  } else if (user?.role === "admin") {
-    fields = ADMINFIELDS
-    profileSchema = adminProfileSchema
-  }
 
   type ProfileFormValues = z.infer<typeof profileSchema>
 

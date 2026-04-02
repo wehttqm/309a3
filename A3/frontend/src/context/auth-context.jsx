@@ -1,4 +1,11 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react"
 import { useApi } from "@/context/api-context"
 
 const AuthContext = createContext(null)
@@ -40,7 +47,9 @@ function normalizeUser(rawUser, roleFromToken) {
     }
   }
 
-  const fullName = [rawUser.first_name, rawUser.last_name].filter(Boolean).join(" ")
+  const fullName = [rawUser.first_name, rawUser.last_name]
+    .filter(Boolean)
+    .join(" ")
   return {
     ...rawUser,
     role,
@@ -161,7 +170,15 @@ export function AuthProvider({ children }) {
       registerBusiness,
       refreshUser: restoreSession,
     }),
-    [user, isLoading, login, logout, registerRegular, registerBusiness, restoreSession]
+    [
+      user,
+      isLoading,
+      login,
+      logout,
+      registerRegular,
+      registerBusiness,
+      restoreSession,
+    ]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -10,7 +10,12 @@ import { ApiProvider } from "@/context/api-context.jsx"
 import { RegularRegister } from "./pages/user/regular/register"
 import { BusinessRegister } from "./pages/user/business/register"
 import { Login } from "./pages/auth/login"
-import { Profile } from "./pages/user/common/profile"
+import { CommonProfile } from "./pages/user/common/profile"
+import { ProtectedRoute } from "./components/protected-route"
+
+import { RegularProfile } from "@/pages/user/regular/profile"
+import { BusinessProfile } from "@/pages/user/business/profile"
+import { AdminProfile } from "@/pages/user/admin/profile"
 
 const NotFound = () => {
   return (
@@ -29,8 +34,19 @@ createRoot(document.getElementById("root")).render(
             <Route element={<Layout />}>
               <Route path="/" element={<Landing />} />
 
-              {/* Common user */}
-              <Route path="/profile" element={<Profile />} />
+              <Route path="/profile" element={<CommonProfile />} />
+
+              <Route element={<ProtectedRoute />} allowedRoles={["regular"]}>
+                <Route path="/profile/regular" element={<RegularProfile />} />
+              </Route>
+
+              <Route element={<ProtectedRoute />} allowedRoles={["business"]}>
+                <Route path="/profile/business" element={<BusinessProfile />} />
+              </Route>
+
+              <Route element={<ProtectedRoute />} allowedRoles={["admin"]}>
+                <Route path="/profile/admin" element={<AdminProfile />} />
+              </Route>
             </Route>
 
             {/* Auth routes */}

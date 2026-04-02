@@ -14,13 +14,7 @@ export function ProtectedRoute({ allowedRoles = [] }) {
   }
 
   if (!user) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-        state={{ from: location }}
-      />
-    )
+    return <Navigate to="/login" replace state={{ from: location }} />
   }
 
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
@@ -29,5 +23,3 @@ export function ProtectedRoute({ allowedRoles = [] }) {
 
   return <Outlet />
 }
-
-

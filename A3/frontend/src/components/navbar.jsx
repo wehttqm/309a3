@@ -47,7 +47,10 @@ export default function Navbar() {
 
         {user?.role === "regular" && (
           <>
-            <Link to="/jobs" className="transition-colors hover:text-foreground">
+            <Link
+              to="/jobs"
+              className="transition-colors hover:text-foreground"
+            >
               Jobs
             </Link>
             <Link
@@ -68,7 +71,10 @@ export default function Navbar() {
             >
               Invitations
             </Link>
-            <Link to="/my/jobs" className="transition-colors hover:text-foreground">
+            <Link
+              to="/my/jobs"
+              className="transition-colors hover:text-foreground"
+            >
               My Jobs
             </Link>
           </>
@@ -130,7 +136,11 @@ export default function Navbar() {
       <div className="flex items-center gap-2">
         {!user && !isLoading ? (
           <>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/login")}
+            >
               Log In
             </Button>
             <Button size="sm" onClick={() => navigate("/register/regular")}>
@@ -149,7 +159,9 @@ export default function Navbar() {
               >
                 <Avatar className="h-7 w-7">
                   <AvatarImage src={user.avatar} />
-                  <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                  <AvatarFallback className="text-xs">
+                    {initials}
+                  </AvatarFallback>
                 </Avatar>
                 <span className="hidden text-sm md:inline">{user.name}</span>
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -157,7 +169,8 @@ export default function Navbar() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                Signed in as <span className="font-medium text-foreground">{user.role}</span>
+                Signed in as{" "}
+                <span className="font-medium text-foreground">{user.role}</span>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
 
@@ -167,8 +180,13 @@ export default function Navbar() {
                 </DropdownMenuItem>
               )}
               {user.role === "business" && (
-                <DropdownMenuItem onClick={() => navigate("/business/profile")}>
+                <DropdownMenuItem onClick={() => navigate("/profile")}>
                   Business Profile
+                </DropdownMenuItem>
+              )}
+              {user.role === "admin" && (
+                <DropdownMenuItem onClick={() => navigate("/profile")}>
+                  Admin Profile
                 </DropdownMenuItem>
               )}
 

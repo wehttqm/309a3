@@ -34,15 +34,15 @@ createRoot(document.getElementById("root")).render(
 
             <Route path="/profile" element={<CommonProfile />} />
 
-            <Route element={<ProtectedRoute />} allowedRoles={["regular"]}>
+            <Route element={<ProtectedRoute allowedRoles={["regular"]} />}>
               <Route path="/profile/regular" element={<RegularProfile />} />
             </Route>
 
-            <Route element={<ProtectedRoute />} allowedRoles={["business"]}>
+            <Route element={<ProtectedRoute allowedRoles={["business"]} />}>
               <Route path="/profile/business" element={<BusinessProfile />} />
             </Route>
 
-            <Route element={<ProtectedRoute />} allowedRoles={["admin"]}>
+            <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
               <Route path="/profile/admin" element={<AdminProfile />} />
             </Route>
           </Route>

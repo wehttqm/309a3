@@ -55,8 +55,8 @@ export const Landing = () => {
                 <Users className="mb-2 h-8 w-8 text-primary" />
                 <CardTitle>My Profile</CardTitle>
                 <CardDescription>
-                  Review your worker information and keep your account details up
-                  to date.
+                  Review your worker information and keep your account details
+                  up to date.
                 </CardDescription>
               </CardHeader>
               <CardContent className="mt-auto">
@@ -71,8 +71,8 @@ export const Landing = () => {
                 <ClipboardCheck className="mb-2 h-8 w-8 text-primary" />
                 <CardTitle>What you can do next</CardTitle>
                 <CardDescription>
-                  As more worker routes are added, this homepage can surface jobs,
-                  qualifications, invitations, and active work items.
+                  As more worker routes are added, this homepage can surface
+                  jobs, qualifications, invitations, and active work items.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -105,15 +105,12 @@ export const Landing = () => {
                 <Building2 className="mb-2 h-8 w-8 text-primary" />
                 <CardTitle>Business Profile</CardTitle>
                 <CardDescription>
-                  Review your business details and keep your organization profile
-                  current.
+                  Review your business details and keep your organization
+                  profile current.
                 </CardDescription>
               </CardHeader>
               <CardContent className="mt-auto">
-                <Button
-                  className="w-full"
-                  onClick={() => navigate("/business/profile")}
-                >
+                <Button className="w-full" onClick={() => navigate("/profile")}>
                   Go to Business Profile <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </CardContent>
@@ -124,8 +121,9 @@ export const Landing = () => {
                 <Briefcase className="mb-2 h-8 w-8 text-primary" />
                 <CardTitle>What you can do next</CardTitle>
                 <CardDescription>
-                  Once business routes are mounted, this homepage can also surface
-                  job postings, candidate discovery, and negotiation activity.
+                  Once business routes are mounted, this homepage can also
+                  surface job postings, candidate discovery, and negotiation
+                  activity.
                 </CardDescription>
               </CardHeader>
             </Card>

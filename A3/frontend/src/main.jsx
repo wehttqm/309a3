@@ -10,6 +10,14 @@ import { RegularRegister } from "./pages/user/regular/register"
 import { BusinessRegister } from "./pages/user/business/register"
 import { Login } from "./pages/auth/login"
 
+const NotFound = () => {
+  return (
+    <div className="flex h-screen w-full items-center justify-center text-2xl">
+      404
+    </div>
+  )
+}
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
@@ -21,6 +29,8 @@ createRoot(document.getElementById("root")).render(
           <Route path="/register/regular" element={<RegularRegister />} />
           <Route path="/register/business" element={<BusinessRegister />} />
           <Route path="/login" element={<Login />} />
+
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

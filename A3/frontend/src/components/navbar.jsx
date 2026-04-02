@@ -14,7 +14,6 @@ import { Briefcase, ChevronDown } from "lucide-react"
 
 export default function Navbar() {
   const { user, logout } = useAuth()
-  console.log(user)
   const navigate = useNavigate()
 
   const handleLogout = () => {
@@ -49,7 +48,7 @@ export default function Navbar() {
         </Link>
 
         {/* Worker links */}
-        {user?.role === "user" && (
+        {user?.role === "regular" && (
           <>
             <Link
               to="/jobs"
@@ -150,7 +149,7 @@ export default function Navbar() {
             >
               Log In
             </Button>
-            <Button size="sm" onClick={() => navigate("/register/user")}>
+            <Button size="sm" onClick={() => navigate("/register/regular")}>
               Sign Up
             </Button>
           </>
@@ -179,7 +178,7 @@ export default function Navbar() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
 
-              {user.role === "user" && (
+              {user.role === "regular" && (
                 <DropdownMenuItem onClick={() => navigate("/profile")}>
                   My Profile
                 </DropdownMenuItem>

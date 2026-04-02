@@ -37,7 +37,7 @@ export const Landing = () => {
           managing temporary staffing from start to finish.
         </p>
         <div className="flex flex-wrap justify-center gap-3">
-          <Button size="lg" onClick={() => navigate("/register/user")}>
+          <Button size="lg" onClick={() => navigate("/register/regular")}>
             Join as Worker <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
           <Button
@@ -114,7 +114,7 @@ export const Landing = () => {
             <CardContent className="mt-auto">
               <Button
                 className="w-full"
-                onClick={() => navigate("/register/user")}
+                onClick={() => navigate("/register/regular")}
               >
                 Sign Up as Worker
               </Button>

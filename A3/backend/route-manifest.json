@@ -1,0 +1,520 @@
+[
+  {
+    "path": "/system/reset-cooldown",
+    "openapiPath": "/system/reset-cooldown",
+    "method": "PATCH",
+    "operationId": "patchSystemResetCooldown",
+    "tag": "System",
+    "pathParams": [],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/system/availability-timeout",
+    "openapiPath": "/system/availability-timeout",
+    "method": "PATCH",
+    "operationId": "patchSystemAvailabilityTimeout",
+    "tag": "System",
+    "pathParams": [],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/system/job-start-window",
+    "openapiPath": "/system/job-start-window",
+    "method": "PATCH",
+    "operationId": "patchSystemJobStartWindow",
+    "tag": "System",
+    "pathParams": [],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/system/negotiation-window",
+    "openapiPath": "/system/negotiation-window",
+    "method": "PATCH",
+    "operationId": "patchSystemNegotiationWindow",
+    "tag": "System",
+    "pathParams": [],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/auth/resets/:resetToken",
+    "openapiPath": "/auth/resets/{resetToken}",
+    "method": "POST",
+    "operationId": "postAuthResetsResetToken",
+    "tag": "Auth",
+    "pathParams": [
+      "resetToken"
+    ],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/auth/resets",
+    "openapiPath": "/auth/resets",
+    "method": "POST",
+    "operationId": "postAuthResets",
+    "tag": "Auth",
+    "pathParams": [],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/auth/tokens",
+    "openapiPath": "/auth/tokens",
+    "method": "POST",
+    "operationId": "postAuthTokens",
+    "tag": "Auth",
+    "pathParams": [],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/users",
+    "openapiPath": "/users",
+    "method": "POST",
+    "operationId": "postUsers",
+    "tag": "Users",
+    "pathParams": [],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/users",
+    "openapiPath": "/users",
+    "method": "GET",
+    "operationId": "getUsers",
+    "tag": "Users",
+    "pathParams": [],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/users/me",
+    "openapiPath": "/users/me",
+    "method": "GET",
+    "operationId": "getUsersMe",
+    "tag": "Users",
+    "pathParams": [],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/users/me/avatar",
+    "openapiPath": "/users/me/avatar",
+    "method": "PUT",
+    "operationId": "putUsersMeAvatar",
+    "tag": "Users",
+    "pathParams": [],
+    "bodyKind": "multipart",
+    "multipartFileField": "file"
+  },
+  {
+    "path": "/users/me/resume",
+    "openapiPath": "/users/me/resume",
+    "method": "PUT",
+    "operationId": "putUsersMeResume",
+    "tag": "Users",
+    "pathParams": [],
+    "bodyKind": "multipart",
+    "multipartFileField": "file"
+  },
+  {
+    "path": "/users/:userId/suspended",
+    "openapiPath": "/users/{userId}/suspended",
+    "method": "PATCH",
+    "operationId": "patchUsersUserIdSuspended",
+    "tag": "Users",
+    "pathParams": [
+      "userId"
+    ],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/users/me",
+    "openapiPath": "/users/me",
+    "method": "PATCH",
+    "operationId": "patchUsersMe",
+    "tag": "Users",
+    "pathParams": [],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/users/me/available",
+    "openapiPath": "/users/me/available",
+    "method": "PATCH",
+    "operationId": "patchUsersMeAvailable",
+    "tag": "Users",
+    "pathParams": [],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/users/me/invitations",
+    "openapiPath": "/users/me/invitations",
+    "method": "GET",
+    "operationId": "getUsersMeInvitations",
+    "tag": "Users",
+    "pathParams": [],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/users/me/interests",
+    "openapiPath": "/users/me/interests",
+    "method": "GET",
+    "operationId": "getUsersMeInterests",
+    "tag": "Users",
+    "pathParams": [],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/businesses",
+    "openapiPath": "/businesses",
+    "method": "POST",
+    "operationId": "postBusinesses",
+    "tag": "Businesses",
+    "pathParams": [],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/businesses",
+    "openapiPath": "/businesses",
+    "method": "GET",
+    "operationId": "getBusinesses",
+    "tag": "Businesses",
+    "pathParams": [],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/businesses/me",
+    "openapiPath": "/businesses/me",
+    "method": "GET",
+    "operationId": "getBusinessesMe",
+    "tag": "Businesses",
+    "pathParams": [],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/businesses/me",
+    "openapiPath": "/businesses/me",
+    "method": "PATCH",
+    "operationId": "patchBusinessesMe",
+    "tag": "Businesses",
+    "pathParams": [],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/businesses/me/jobs",
+    "openapiPath": "/businesses/me/jobs",
+    "method": "GET",
+    "operationId": "getBusinessesMeJobs",
+    "tag": "Businesses",
+    "pathParams": [],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/businesses/me/jobs",
+    "openapiPath": "/businesses/me/jobs",
+    "method": "POST",
+    "operationId": "postBusinessesMeJobs",
+    "tag": "Businesses",
+    "pathParams": [],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/businesses/me/jobs/:jobId",
+    "openapiPath": "/businesses/me/jobs/{jobId}",
+    "method": "PATCH",
+    "operationId": "patchBusinessesMeJobsJobId",
+    "tag": "Businesses",
+    "pathParams": [
+      "jobId"
+    ],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/businesses/me/jobs/:jobId",
+    "openapiPath": "/businesses/me/jobs/{jobId}",
+    "method": "DELETE",
+    "operationId": "deleteBusinessesMeJobsJobId",
+    "tag": "Businesses",
+    "pathParams": [
+      "jobId"
+    ],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/businesses/me/avatar",
+    "openapiPath": "/businesses/me/avatar",
+    "method": "PUT",
+    "operationId": "putBusinessesMeAvatar",
+    "tag": "Businesses",
+    "pathParams": [],
+    "bodyKind": "multipart",
+    "multipartFileField": "file"
+  },
+  {
+    "path": "/businesses/:businessId",
+    "openapiPath": "/businesses/{businessId}",
+    "method": "GET",
+    "operationId": "getBusinessesBusinessId",
+    "tag": "Businesses",
+    "pathParams": [
+      "businessId"
+    ],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/businesses/:businessId/verified",
+    "openapiPath": "/businesses/{businessId}/verified",
+    "method": "PATCH",
+    "operationId": "patchBusinessesBusinessIdVerified",
+    "tag": "Businesses",
+    "pathParams": [
+      "businessId"
+    ],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/position-types",
+    "openapiPath": "/position-types",
+    "method": "POST",
+    "operationId": "postPositionTypes",
+    "tag": "Position Types",
+    "pathParams": [],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/position-types",
+    "openapiPath": "/position-types",
+    "method": "GET",
+    "operationId": "getPositionTypes",
+    "tag": "Position Types",
+    "pathParams": [],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/position-types/:positionTypeId",
+    "openapiPath": "/position-types/{positionTypeId}",
+    "method": "PATCH",
+    "operationId": "patchPositionTypesPositionTypeId",
+    "tag": "Position Types",
+    "pathParams": [
+      "positionTypeId"
+    ],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/position-types/:positionTypeId",
+    "openapiPath": "/position-types/{positionTypeId}",
+    "method": "DELETE",
+    "operationId": "deletePositionTypesPositionTypeId",
+    "tag": "Position Types",
+    "pathParams": [
+      "positionTypeId"
+    ],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/qualifications",
+    "openapiPath": "/qualifications",
+    "method": "GET",
+    "operationId": "getQualifications",
+    "tag": "Qualifications",
+    "pathParams": [],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/qualifications",
+    "openapiPath": "/qualifications",
+    "method": "POST",
+    "operationId": "postQualifications",
+    "tag": "Qualifications",
+    "pathParams": [],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/qualifications/:qualificationId",
+    "openapiPath": "/qualifications/{qualificationId}",
+    "method": "GET",
+    "operationId": "getQualificationsQualificationId",
+    "tag": "Qualifications",
+    "pathParams": [
+      "qualificationId"
+    ],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/qualifications/:qualificationId",
+    "openapiPath": "/qualifications/{qualificationId}",
+    "method": "PATCH",
+    "operationId": "patchQualificationsQualificationId",
+    "tag": "Qualifications",
+    "pathParams": [
+      "qualificationId"
+    ],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/qualifications/:qualificationId/document",
+    "openapiPath": "/qualifications/{qualificationId}/document",
+    "method": "PUT",
+    "operationId": "putQualificationsQualificationIdDocument",
+    "tag": "Qualifications",
+    "pathParams": [
+      "qualificationId"
+    ],
+    "bodyKind": "multipart",
+    "multipartFileField": "file"
+  },
+  {
+    "path": "/jobs",
+    "openapiPath": "/jobs",
+    "method": "GET",
+    "operationId": "getJobs",
+    "tag": "Jobs",
+    "pathParams": [],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/jobs/:jobId",
+    "openapiPath": "/jobs/{jobId}",
+    "method": "GET",
+    "operationId": "getJobsJobId",
+    "tag": "Jobs",
+    "pathParams": [
+      "jobId"
+    ],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/jobs/:jobId/no-show",
+    "openapiPath": "/jobs/{jobId}/no-show",
+    "method": "PATCH",
+    "operationId": "patchJobsJobIdNoShow",
+    "tag": "Jobs",
+    "pathParams": [
+      "jobId"
+    ],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/jobs/:jobId/interested",
+    "openapiPath": "/jobs/{jobId}/interested",
+    "method": "PATCH",
+    "operationId": "patchJobsJobIdInterested",
+    "tag": "Jobs",
+    "pathParams": [
+      "jobId"
+    ],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/jobs/:jobId/interests",
+    "openapiPath": "/jobs/{jobId}/interests",
+    "method": "GET",
+    "operationId": "getJobsJobIdInterests",
+    "tag": "Jobs",
+    "pathParams": [
+      "jobId"
+    ],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/jobs/:jobId/candidates",
+    "openapiPath": "/jobs/{jobId}/candidates",
+    "method": "GET",
+    "operationId": "getJobsJobIdCandidates",
+    "tag": "Jobs",
+    "pathParams": [
+      "jobId"
+    ],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/jobs/:jobId/candidates/:userId",
+    "openapiPath": "/jobs/{jobId}/candidates/{userId}",
+    "method": "GET",
+    "operationId": "getJobsJobIdCandidatesUserId",
+    "tag": "Jobs",
+    "pathParams": [
+      "jobId",
+      "userId"
+    ],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/jobs/:jobId/candidates/:userId/interested",
+    "openapiPath": "/jobs/{jobId}/candidates/{userId}/interested",
+    "method": "PATCH",
+    "operationId": "patchJobsJobIdCandidatesUserIdInterested",
+    "tag": "Jobs",
+    "pathParams": [
+      "jobId",
+      "userId"
+    ],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/negotiations",
+    "openapiPath": "/negotiations",
+    "method": "POST",
+    "operationId": "postNegotiations",
+    "tag": "Negotiations",
+    "pathParams": [],
+    "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/negotiations/me",
+    "openapiPath": "/negotiations/me",
+    "method": "GET",
+    "operationId": "getNegotiationsMe",
+    "tag": "Negotiations",
+    "pathParams": [],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/negotiations/me/decision",
+    "openapiPath": "/negotiations/me/decision",
+    "method": "PATCH",
+    "operationId": "patchNegotiationsMeDecision",
+    "tag": "Negotiations",
+    "pathParams": [],
+    "bodyKind": "json",
+    "multipartFileField": null
+  }
+]

@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom"
 
 import "./index.css"
 import { Landing } from "@/pages/public/landing.jsx"
+import { Businesses } from "@/pages/public/businesses.jsx"
 import Layout from "@/layouts/layout"
 import { AuthProvider } from "@/context/auth-context.jsx"
 import { RegularRegister } from "./pages/user/regular/register"
@@ -16,6 +17,8 @@ import { ProtectedRoute } from "./components/protected-route"
 import { RegularProfile } from "@/pages/user/regular/profile"
 import { BusinessProfile } from "@/pages/user/business/profile"
 import { AdminProfile } from "@/pages/user/admin/profile"
+import { AdminUsersPage } from "@/pages/user/admin/users"
+import { AdminBusinessesPage } from "@/pages/user/admin/businesses"
 import { RegularJobs } from "@/pages/user/regular/jobs"
 import { RegularInterests } from "@/pages/user/regular/interests"
 import { RegularInvitations } from "@/pages/user/regular/invitations"
@@ -25,7 +28,7 @@ import { BusinessJobsCreate } from "@/pages/user/business/jobs-create"
 const NotFound = () => {
   return (
     <div className="flex h-screen w-full items-center justify-center text-2xl">
-      404 Not Found
+      404
     </div>
   )
 }
@@ -37,8 +40,8 @@ createRoot(document.getElementById("root")).render(
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<Landing />} />
-
             <Route path="/profile" element={<CommonProfile />} />
+            <Route path="/businesses" element={<Businesses />} />             <Route path="/profile" element={<CommonProfile />} />
             <Route path="/jobs" element={<CommonJobs />} />
 
             <Route element={<ProtectedRoute allowedRoles={["regular"]} />}>
@@ -56,9 +59,10 @@ createRoot(document.getElementById("root")).render(
 
             <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
               <Route path="/profile/admin" element={<AdminProfile />} />
+              <Route path="/admin/users" element={<AdminUsersPage />} />
+              <Route path="/admin/businesses" element={<AdminBusinessesPage />} />
             </Route>
           </Route>
-
           <Route path="/register/regular" element={<RegularRegister />} />
           <Route path="/register/business" element={<BusinessRegister />} />
           <Route path="/login" element={<Login />} />

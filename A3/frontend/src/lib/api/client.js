@@ -37,3 +37,18 @@ export const authApi = {
       body: payload,
     }),
 }
+
+export const adminApi = {
+  getRegularUsers: (query) => apiClient.getUsers({ query }),
+  setUserSuspended: (userId, suspended) =>
+    apiClient.patchUsersUserIdSuspended({
+      pathParams: { userId },
+      body: { suspended },
+    }),
+  getBusinesses: (query) => apiClient.getBusinesses({ query }),
+  setBusinessVerified: (businessId, verified) =>
+    apiClient.patchBusinessesBusinessIdVerified({
+      pathParams: { businessId },
+      body: { verified },
+    }),
+}

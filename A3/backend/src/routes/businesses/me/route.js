@@ -24,6 +24,7 @@ async function GET(req, res) {
       avatar: business.avatar,
       biography: business.biography,
       activated: business.activated,
+      owner_name: business.owner_name,
       verified: business.verified,
       createdAt: business.createdAt,
     };
@@ -50,27 +51,27 @@ async function PATCH(req, res) {
     const b = await prisma.user.update({
       where: { id: req.auth.id },
       data: {
-        ...(business_name && { business_name }),
-        ...(owner_name && { owner_name }),
-        ...(phone_number && { phone_number }),
-        ...(postal_address && { postal_address }),
-        ...(location && {
-          locationLat: location.lat,
-          locationLon: location.lon,
+        ...(business_name !== undefined && { business_name }),
+        ...(owner_name !== undefined && { owner_name }),
+        ...(phone_number !== undefined && { phone_number }),
+        ...(postal_address !== undefined && { postal_address }),
+        ...(location !== undefined && {
+          locationLat: location?.lat ?? null,
+          locationLon: location?.lon ?? null,
         }),
-        ...(avatar && { avatar }),
-        ...(biography && { biography }),
+        ...(avatar !== undefined && { avatar }),
+        ...(biography !== undefined && { biography }),
       },
     });
 
     return res.json({
-      ...(business_name && { business_name: b.business_name }),
-      ...(owner_name && { owner_name: b.owner_name }),
-      ...(phone_number && { phone_number: b.phone_number }),
-      ...(postal_address && { postal_address: b.postal_address }),
-      ...(location && { location: { lat: b.locationLat, lon: b.locationLon } }),
-      ...(avatar && { avatar: b.avatar }),
-      ...(biography && { biography: b.biography }),
+      ...(business_name !== undefined && { business_name: b.business_name }),
+      ...(owner_name !== undefined && { owner_name: b.owner_name }),
+      ...(phone_number !== undefined && { phone_number: b.phone_number }),
+      ...(postal_address !== undefined && { postal_address: b.postal_address }),
+      ...(location !== undefined && { location: { lat: b.locationLat, lon: b.locationLon } }),
+      ...(avatar !== undefined && { avatar: b.avatar }),
+      ...(biography !== undefined && { biography: b.biography }),
     });
   } catch (error) {
     console.error(error);

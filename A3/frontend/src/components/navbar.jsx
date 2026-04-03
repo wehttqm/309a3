@@ -13,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Briefcase, ChevronDown } from "lucide-react"
 
 export default function Navbar() {
-  const { user, logout, isLoading } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
 
   const handleLogout = () => {
@@ -32,11 +32,13 @@ export default function Navbar() {
 
   return (
     <nav className="flex items-center justify-between border-b bg-background px-6 py-3">
+      {/* Left: Logo */}
       <Link to="/" className="flex items-center gap-2 text-base font-semibold">
         <Briefcase className="h-5 w-5 text-primary" />
         StaffingPlatform
       </Link>
 
+      {/* Middle: Public links */}
       <div className="hidden items-center gap-4 text-sm text-muted-foreground md:flex">
         <Link
           to="/businesses"
@@ -45,6 +47,7 @@ export default function Navbar() {
           Businesses
         </Link>
 
+        {/* Worker links */}
         {user?.role === "regular" && (
           <>
             <Link
@@ -80,6 +83,7 @@ export default function Navbar() {
           </>
         )}
 
+        {/* Business links */}
         {user?.role === "business" && (
           <>
             <Link
@@ -97,6 +101,7 @@ export default function Navbar() {
           </>
         )}
 
+        {/* Admin links */}
         {user?.role === "admin" && (
           <>
             <Link
@@ -133,8 +138,9 @@ export default function Navbar() {
         )}
       </div>
 
+      {/* Right: Auth */}
       <div className="flex items-center gap-2">
-        {!user && !isLoading ? (
+        {!user ? (
           <>
             <Button
               variant="ghost"
@@ -147,9 +153,7 @@ export default function Navbar() {
               Sign Up
             </Button>
           </>
-        ) : null}
-
-        {user ? (
+        ) : (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -180,13 +184,8 @@ export default function Navbar() {
                 </DropdownMenuItem>
               )}
               {user.role === "business" && (
-                <DropdownMenuItem onClick={() => navigate("/profile")}>
+                <DropdownMenuItem onClick={() => navigate("/business/profile")}>
                   Business Profile
-                </DropdownMenuItem>
-              )}
-              {user.role === "admin" && (
-                <DropdownMenuItem onClick={() => navigate("/profile")}>
-                  Admin Profile
                 </DropdownMenuItem>
               )}
 
@@ -199,7 +198,7 @@ export default function Navbar() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        ) : null}
+        )}
       </div>
     </nav>
   )

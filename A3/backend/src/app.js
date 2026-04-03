@@ -36,7 +36,7 @@ function create_app() {
     addRoute(app, route.path, route.method, ...middlewares);
   }
 
-  //add a flag for prod
+  // add a flag for prod
   app.get("/openapi.json", (req, res) => {
     res.json(openapiSpec);
   });

@@ -9,8 +9,9 @@ const POST = async (req, res) => {
   }
 
   try {
+    const normalizedEmail = String(email).trim().toLowerCase();
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (!user || user.password !== password) {
@@ -24,9 +25,11 @@ const POST = async (req, res) => {
     }
 
     const expiresIn = "24h";
-    const token = jwt.sign({ id: user.id, role: user.role }, "secret", {
-      expiresIn,
-    });
+    const token = jwt.sign(
+      { id: user.id, role: user.role, email: user.email },
+      process.env.JWT_SECRET || "secret",
+      { expiresIn },
+    );
 
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24);
@@ -34,6 +37,7 @@ const POST = async (req, res) => {
     return res.status(200).json({
       token,
       expiresAt: expiresAt.toISOString(),
+      role: user.role,
     });
   } catch (error) {
     console.error("Auth Token Error:", error);

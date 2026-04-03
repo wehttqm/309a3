@@ -4,7 +4,7 @@ import { Profile } from "@/components/profile"
 const adminFields = [{ label: "Email", id: "email", type: "email" }]
 
 const adminProfileSchema = z.object({
-  email: z.email("Invalid email"),
+  email: z.string().email("Invalid email"),
 })
 
 export const AdminProfile = () => {

@@ -1,13 +1,15 @@
 const { expressjwt: jwt } = require("express-jwt");
 
+const SECRET = process.env.JWT_SECRET || "secret";
+
 const strictAuth = jwt({
-  secret: "secret",
+  secret: SECRET,
   algorithms: ["HS256"],
-  requestProperty: "auth", // Decoded JWT will be at req.auth
+  requestProperty: "auth",
 });
 
 const optionalAuth = jwt({
-  secret: "secret",
+  secret: SECRET,
   algorithms: ["HS256"],
   requestProperty: "auth",
   credentialsRequired: false,

@@ -92,9 +92,10 @@ export function AuthProvider({ children }) {
         {
           id: claims.id,
           role,
+          email: claims.email || "",
           name: "Admin",
         },
-        role
+        role,
       )
     }
 
@@ -138,7 +139,7 @@ export function AuthProvider({ children }) {
         throw error
       }
     },
-    [clearSession, getCurrentUser]
+    [clearSession, getCurrentUser],
   )
 
   const logout = useCallback(() => {
@@ -171,7 +172,7 @@ export function AuthProvider({ children }) {
       registerRegular,
       registerBusiness,
       restoreSession,
-    ]
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

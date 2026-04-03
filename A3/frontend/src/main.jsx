@@ -19,6 +19,8 @@ import { BusinessProfile } from "@/pages/user/business/profile"
 import { AdminProfile } from "@/pages/user/admin/profile"
 import { AdminUsersPage } from "@/pages/user/admin/users"
 import { AdminBusinessesPage } from "@/pages/user/admin/businesses"
+import { AdminPositionTypesPage } from "@/pages/user/admin/position-types"
+import { AdminQualificationsPage } from "@/pages/user/admin/qualifications"
 import { RegularJobs } from "@/pages/user/regular/jobs"
 import { RegularInterests } from "@/pages/user/regular/interests"
 import { RegularInvitations } from "@/pages/user/regular/invitations"
@@ -41,7 +43,7 @@ createRoot(document.getElementById("root")).render(
           <Route element={<Layout />}>
             <Route path="/" element={<Landing />} />
             <Route path="/profile" element={<CommonProfile />} />
-            <Route path="/businesses" element={<Businesses />} />             <Route path="/profile" element={<CommonProfile />} />
+            <Route path="/businesses" element={<Businesses />} />
             <Route path="/jobs" element={<CommonJobs />} />
 
             <Route element={<ProtectedRoute allowedRoles={["regular"]} />}>
@@ -61,6 +63,8 @@ createRoot(document.getElementById("root")).render(
               <Route path="/profile/admin" element={<AdminProfile />} />
               <Route path="/admin/users" element={<AdminUsersPage />} />
               <Route path="/admin/businesses" element={<AdminBusinessesPage />} />
+              <Route path="/admin/positions" element={<AdminPositionTypesPage />} />
+              <Route path="/admin/qualifications" element={<AdminQualificationsPage />} />
             </Route>
           </Route>
           <Route path="/register/regular" element={<RegularRegister />} />

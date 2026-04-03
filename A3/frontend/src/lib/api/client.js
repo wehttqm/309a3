@@ -51,4 +51,25 @@ export const adminApi = {
       pathParams: { businessId },
       body: { verified },
     }),
+  getPositionTypes: (query) => apiClient.getPositionTypes({ query }),
+  createPositionType: (body) => apiClient.postPositionTypes({ body }),
+  updatePositionType: (positionTypeId, body) =>
+    apiClient.patchPositionTypesPositionTypeId({
+      pathParams: { positionTypeId },
+      body,
+    }),
+  deletePositionType: (positionTypeId) =>
+    apiClient.deletePositionTypesPositionTypeId({
+      pathParams: { positionTypeId },
+    }),
+  getQualifications: (query) => apiClient.getQualifications({ query }),
+  getQualification: (qualificationId) =>
+    apiClient.getQualificationsQualificationId({
+      pathParams: { qualificationId },
+    }),
+  updateQualification: (qualificationId, body) =>
+    apiClient.patchQualificationsQualificationId({
+      pathParams: { qualificationId },
+      body,
+    }),
 }

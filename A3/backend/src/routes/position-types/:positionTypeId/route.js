@@ -5,9 +5,9 @@ const PATCH = async (req, res) => {
   const { name, description, hidden } = req.body;
 
   if (
-    (name && typeof name !== "string") ||
-    (description && typeof description !== "string") ||
-    (hidden && typeof hidden !== "boolean")
+    (name !== undefined && typeof name !== "string") ||
+    (description !== undefined && typeof description !== "string") ||
+    (hidden !== undefined && typeof hidden !== "boolean")
   ) {
     return res.status(400).json({ error: "Invalid payload." });
   }
@@ -17,21 +17,27 @@ const PATCH = async (req, res) => {
     return res.status(400).json({ error: "Invalid payload." });
   }
   try {
+    const existing = await prisma.positionType.findUnique({ where: { id: pId } });
+    if (!existing) {
+      return res.status(404).json({ error: "Position type not found." });
+    }
+
     const p = await prisma.positionType.update({
       where: {
         id: pId,
       },
       data: {
-        ...(name && { name }),
-        ...(description && { description }),
-        ...(hidden && { hidden }),
+        ...(name !== undefined && { name }),
+        ...(description !== undefined && { description }),
+        ...(hidden !== undefined && { hidden }),
       },
     });
 
     return res.status(200).json({
-      ...(name && { name: p.name }),
-      ...(description && { description: p.description }),
-      ...(hidden && { hidden: p.hidden }),
+      id: p.id,
+      ...(name !== undefined && { name: p.name }),
+      ...(description !== undefined && { description: p.description }),
+      ...(hidden !== undefined && { hidden: p.hidden }),
     });
   } catch (error) {
     console.log(error);
@@ -52,13 +58,20 @@ const DELETE = async (req, res) => {
         id: pId,
       },
       select: {
+        id: true,
         _count: {
           select: {
-            qualifications: true,
+            qualifications: {
+              where: { status: "approved" },
+            },
           },
         },
       },
     });
+
+    if (!p) {
+      return res.status(404).json({ error: "Position type not found." });
+    }
 
     if (p._count.qualifications > 0) {
       return res.status(409).json({
@@ -72,7 +85,7 @@ const DELETE = async (req, res) => {
       },
     });
 
-    return res.status(209).json();
+    return res.status(204).end();
   } catch (error) {
     console.log(error);
     return res.status(500).json({ error: "Internal server error." });

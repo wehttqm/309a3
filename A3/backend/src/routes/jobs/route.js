@@ -25,7 +25,6 @@ const GET = async (req, res) => {
       limit,
     } = req.query;
 
-    // Validate sort
     const validSorts = [
       "updatedAt",
       "start_time",
@@ -54,46 +53,69 @@ const GET = async (req, res) => {
       });
     }
 
-    let parsedLat, parsedLon;
+    let parsedLat;
+    let parsedLon;
+
     if (lat !== undefined || lon !== undefined) {
       if (lat === undefined || lon === undefined) {
         return res
           .status(400)
           .json({ error: "lat and lon must both be specified." });
       }
+
       parsedLat = parseFloat(lat);
       parsedLon = parseFloat(lon);
+
       if (isNaN(parsedLat) || isNaN(parsedLon)) {
         return res.status(400).json({ error: "lat and lon must be numbers." });
       }
     }
 
-    const pageNum = page ? parseInt(page) : 1;
-    const limitNum = limit ? parseInt(limit) : 10;
-    if (isNaN(pageNum) || pageNum < 1)
-      return res.status(400).json({ error: "Invalid page." });
-    if (isNaN(limitNum) || limitNum < 1)
-      return res.status(400).json({ error: "Invalid limit." });
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 10;
 
-    if (position_type_id !== undefined && isNaN(parseInt(position_type_id))) {
-      return res.status(400).json({ error: "Invalid position_type_id." });
+    if (isNaN(pageNum) || pageNum < 1) {
+      return res.status(400).json({ error: "Invalid page." });
     }
-    if (business_id !== undefined && isNaN(parseInt(business_id))) {
-      return res.status(400).json({ error: "Invalid business_id." });
+
+    if (isNaN(limitNum) || limitNum < 1) {
+      return res.status(400).json({ error: "Invalid limit." });
+    }
+
+    let requestedPositionTypeId;
+    if (position_type_id !== undefined) {
+      requestedPositionTypeId = parseInt(position_type_id, 10);
+      if (isNaN(requestedPositionTypeId)) {
+        return res.status(400).json({ error: "Invalid position_type_id." });
+      }
+    }
+
+    let requestedBusinessId;
+    if (business_id !== undefined) {
+      requestedBusinessId = parseInt(business_id, 10);
+      if (isNaN(requestedBusinessId)) {
+        return res.status(400).json({ error: "Invalid business_id." });
+      }
     }
 
     const userQualifications = await prisma.qualification.findMany({
       where: { userId: req.auth.id, status: "approved" },
       select: { positionTypeId: true },
     });
+
     const qualifiedPositionTypeIds = userQualifications.map(
-      (q) => q.positionTypeId,
+      (q) => q.positionTypeId
     );
+
+    const effectivePositionTypeIds =
+      requestedPositionTypeId !== undefined
+        ? qualifiedPositionTypeIds.filter((id) => id === requestedPositionTypeId)
+        : qualifiedPositionTypeIds;
 
     const where = {
       status: "open",
-      positionTypeId: { in: qualifiedPositionTypeIds },
-      ...(business_id && { businessId: parseInt(business_id) }),
+      positionTypeId: { in: effectivePositionTypeIds },
+      ...(requestedBusinessId !== undefined && { businessId: requestedBusinessId }),
     };
 
     const negotiationWindowSetting = await prisma.systemSetting.findUnique({
@@ -118,18 +140,19 @@ const GET = async (req, res) => {
 
     const validJobs = jobs.filter((job) => {
       const latestNegotiationStart = new Date(
-        job.startTime.getTime() - negotiationWindowSeconds * 1000,
+        job.startTime.getTime() - negotiationWindowSeconds * 1000
       );
       return now <= latestNegotiationStart;
     });
-
-    const count = validJobs.length;
 
     let jobsWithDistance = validJobs.map((job) => {
       const base = {
         id: job.id,
         status: job.status,
-        position_type: { id: job.positionType.id, name: job.positionType.name },
+        position_type: {
+          id: job.positionType.id,
+          name: job.positionType.name,
+        },
         business: {
           id: job.business.id,
           business_name: job.business.business_name,
@@ -148,9 +171,10 @@ const GET = async (req, res) => {
                 parsedLat,
                 parsedLon,
                 job.business.locationLat,
-                job.business.locationLon,
+                job.business.locationLon
               )
             : null;
+
         base.distance =
           distance !== null ? Math.round(distance * 10) / 10 : null;
         base.eta = distance !== null ? Math.round((distance / 30) * 60) : null;
@@ -160,7 +184,9 @@ const GET = async (req, res) => {
     });
 
     jobsWithDistance.sort((a, b) => {
-      let aVal, bVal;
+      let aVal;
+      let bVal;
+
       switch (sortField) {
         case "start_time":
           aVal = new Date(a.start_time);
@@ -190,14 +216,17 @@ const GET = async (req, res) => {
           aVal = new Date(a.start_time);
           bVal = new Date(b.start_time);
       }
+
       if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
       if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
       return 0;
     });
 
+    const count = jobsWithDistance.length;
+
     const paginated = jobsWithDistance.slice(
       (pageNum - 1) * limitNum,
-      pageNum * limitNum,
+      pageNum * limitNum
     );
 
     return res.status(200).json({ count, results: paginated });

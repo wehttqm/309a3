@@ -13,7 +13,7 @@ import { ChevronDown } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 
 export default function Navbar() {
-  const { user, logout } = useAuth()
+  const { user, logout, isLoading } = useAuth()
   const navigate = useNavigate()
 
   const handleLogout = () => {
@@ -47,7 +47,7 @@ export default function Navbar() {
         </button>
 
         {/* Middle: Role-based links */}
-        <div className="hidden items-center gap-4 text-sm text-muted-foreground md:flex">
+        <div className="hidden items-center gap-4 text-sm text-foreground md:flex">
           {user?.role === "regular" && (
             <>
               <Link to="/jobs" className="transition-colors hover:text-foreground">Jobs</Link>
@@ -82,7 +82,7 @@ export default function Navbar() {
             Businesses
           </Button>
 
-          {!user ? (
+          {!user && !isLoading ? (
             <>
               <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>
                 Log In
@@ -91,12 +91,14 @@ export default function Navbar() {
                 Sign Up
               </Button>
             </>
-          ) : (
+          ) : null}
+
+          {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="flex items-center gap-2">
                   <Avatar className="h-7 w-7">
-                    <AvatarImage src={user.avatar} />
+                    <AvatarImage src={user.avatar || undefined} />
                     <AvatarFallback className="text-xs">{initials}</AvatarFallback>
                   </Avatar>
                   <span className="hidden text-sm md:inline">{user.name}</span>
@@ -104,7 +106,7 @@ export default function Navbar() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                <DropdownMenuLabel className="text-xs font-normal text-foreground">
                   Signed in as{" "}
                   <span className="font-medium text-foreground">{user.role}</span>
                 </DropdownMenuLabel>
@@ -113,7 +115,10 @@ export default function Navbar() {
                   <DropdownMenuItem onClick={() => navigate("/profile")}>My Profile</DropdownMenuItem>
                 )}
                 {user.role === "business" && (
-                  <DropdownMenuItem onClick={() => navigate("/business/profile")}>Business Profile</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/profile/business")}>Business Profile</DropdownMenuItem>
+                )}
+                {user.role === "admin" && (
+                  <DropdownMenuItem onClick={() => navigate("/profile/admin")}>Admin Profile</DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-destructive">
@@ -121,7 +126,7 @@ export default function Navbar() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
+          ) : null}
         </div>
 
       </nav>

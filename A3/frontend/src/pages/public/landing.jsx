@@ -1,24 +1,24 @@
-import { useNavigate } from "react-router-dom"
-import { useAuth } from "@/context/auth-context"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { useAuth } from "@/context/auth-context"
 import {
+  ArrowUpRight,
   Briefcase,
-  Users,
-  ClipboardCheck,
-  ArrowRight,
   Building2,
-  UserCheck,
+  ClipboardCheck,
   ShieldCheck,
+  UserCheck,
+  Users,
 } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 export const Landing = () => {
   const navigate = useNavigate()
@@ -61,7 +61,7 @@ export const Landing = () => {
               </CardHeader>
               <CardContent className="mt-auto">
                 <Button className="w-full" onClick={() => navigate("/profile")}>
-                  Go to Profile <ArrowRight className="ml-2 h-4 w-4" />
+                  Go to Profile <ArrowUpRight className="ml-2 h-4 w-4" />
                 </Button>
               </CardContent>
             </Card>
@@ -111,7 +111,7 @@ export const Landing = () => {
               </CardHeader>
               <CardContent className="mt-auto">
                 <Button className="w-full" onClick={() => navigate("/profile")}>
-                  Go to Business Profile <ArrowRight className="ml-2 h-4 w-4" />
+                  Go to Business Profile <ArrowUpRight className="ml-2 h-4 w-4" />
                 </Button>
               </CardContent>
             </Card>
@@ -159,39 +159,72 @@ export const Landing = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <section className="mx-auto max-w-3xl px-6 py-20 text-center">
-        <Badge variant="secondary" className="mb-4">
-          Temporary Staffing Platform
-        </Badge>
-        <h1 className="mb-4 text-4xl font-bold tracking-tight">
-          Connect Businesses with Qualified Workers
-        </h1>
-        <p className="mb-8 text-lg text-muted-foreground">
-          A streamlined platform for posting jobs, verifying qualifications, and
-          managing temporary staffing from start to finish.
-        </p>
-        <div className="flex flex-wrap justify-center gap-3">
-          <Button size="lg" onClick={() => navigate("/register/regular")}>
-            Join as Worker <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={() => navigate("/register/business")}
-          >
-            Join as Business
-          </Button>
-          <Button size="lg" variant="ghost" onClick={() => navigate("/login")}>
-            Log In
-          </Button>
+    <div className="bg-background text-foreground">
+      <section className="relative flex min-h-screen flex-col items-center justify-start overflow-hidden px-6 pt-[17vh] text-center">
+        {/* Blue radial glow */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 80% 60% at 50% 38%, oklch(0.88 0.07 240) 0%, oklch(0.96 0.03 240) 40%, transparent 72%)",
+          }}
+        />
+        <div className="relative z-10 mx-auto max-w-3xl">
+          <h1 className="mb-4 text-6xl font-bold tracking-tight">
+            Connect Businesses with Qualified Workers
+          </h1>
+          <p className="mb-8 text-lg text-muted-foreground">
+            Post jobs, verify qualifications, and manage staffing — start to finish.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Button
+              size="lg"
+              onClick={() => navigate("/register/regular")}
+              className="group"
+            >
+              Join as Worker{" "}
+              <ArrowUpRight className="ml-2 h-4 w-4 transition-transform duration-200 rotate-45 group-hover:rotate-0" />
+            </Button>
+            <Button
+              size="lg"
+              variant="ghost"
+              onClick={() => navigate("/register/business")}
+            >
+              Join as Business
+            </Button>
+            <Button size="lg" variant="ghost" onClick={() => navigate("/login")}>
+              Log In
+            </Button>
+          </div>
+
+          {/* Testimonial bar */}
+          <div className="mt-8 flex items-center justify-center gap-4">
+            <div className="flex items-center">
+              {[
+                "https://randomuser.me/api/portraits/women/44.jpg",
+                "https://randomuser.me/api/portraits/men/32.jpg",
+                "https://randomuser.me/api/portraits/women/68.jpg",
+              ].map((src, i) => (
+                <img
+                  key={i}
+                  src={src}
+                  alt=""
+                  className="h-9 w-9 rounded-full border-2 border-background object-cover"
+                  style={{ marginLeft: i === 0 ? 0 : "-10px" }}
+                />
+              ))}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Trusted by <span className="font-semibold text-foreground">10,000+</span> businesses to find reliable staff
+            </p>
+          </div>
         </div>
       </section>
 
       <Separator />
 
       <section className="mx-auto max-w-5xl px-6 py-16">
-        <h2 className="mb-10 text-center text-2xl font-semibold">
+        <h2 className="mb-10 text-center text-2xl font-semibold tracking-wide">
           How It Works
         </h2>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -200,8 +233,7 @@ export const Landing = () => {
               <UserCheck className="mb-2 h-8 w-8 text-primary" />
               <CardTitle className="text-lg">1. Create an Account</CardTitle>
               <CardDescription>
-                Sign up as a worker or business. Workers submit qualifications;
-                businesses get verified before posting jobs.
+                Sign up as a worker or business and complete your profile.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -210,8 +242,7 @@ export const Landing = () => {
               <Briefcase className="mb-2 h-8 w-8 text-primary" />
               <CardTitle className="text-lg">2. Match & Negotiate</CardTitle>
               <CardDescription>
-                Businesses post jobs and invite candidates. Workers express
-                interest. When both sides match, negotiation begins.
+                Express interest, get invited, and negotiate terms when both sides align.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -220,8 +251,7 @@ export const Landing = () => {
               <ClipboardCheck className="mb-2 h-8 w-8 text-primary" />
               <CardTitle className="text-lg">3. Get to Work</CardTitle>
               <CardDescription>
-                Confirmed commitments are tracked on both sides. Completed jobs
-                build your record on the platform.
+                Track commitments on both sides and build your record.
               </CardDescription>
             </CardHeader>
           </Card>
@@ -231,7 +261,7 @@ export const Landing = () => {
       <Separator />
 
       <section className="mx-auto max-w-5xl px-6 py-16">
-        <h2 className="mb-10 text-center text-2xl font-semibold">
+        <h2 className="mb-10 text-center text-2xl font-semibold tracking-wide">
           Who Is This For?
         </h2>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -240,16 +270,16 @@ export const Landing = () => {
               <Users className="mb-1 h-7 w-7 text-primary" />
               <CardTitle>Workers</CardTitle>
               <CardDescription>
-                Browse available jobs, submit qualification documents, and
-                manage your schedule and commitments.
+                Browse jobs, submit qualifications, and manage your commitments.
               </CardDescription>
             </CardHeader>
             <CardContent className="mt-auto">
               <Button
-                className="w-full"
+                className="w-full group"
                 onClick={() => navigate("/register/regular")}
               >
-                Sign Up as Worker
+                Sign Up as Worker{" "}
+                <ArrowUpRight className="ml-2 h-4 w-4 transition-transform duration-200 rotate-45 group-hover:rotate-0" />
               </Button>
             </CardContent>
           </Card>
@@ -259,8 +289,7 @@ export const Landing = () => {
               <Building2 className="mb-1 h-7 w-7 text-primary" />
               <CardTitle>Businesses</CardTitle>
               <CardDescription>
-                Post job openings, search qualified candidates, and manage your
-                temporary workforce in one place.
+                Post jobs, find qualified candidates, and manage your workforce.
               </CardDescription>
             </CardHeader>
             <CardContent className="mt-auto">
@@ -279,8 +308,7 @@ export const Landing = () => {
               <ShieldCheck className="mb-1 h-7 w-7 text-primary" />
               <CardTitle>Administrators</CardTitle>
               <CardDescription>
-                Verify businesses, review qualification requests, manage
-                position types, and configure system settings.
+                Verify businesses, manage qualifications, and configure the platform.
               </CardDescription>
             </CardHeader>
             <CardContent className="mt-auto">
@@ -298,11 +326,10 @@ export const Landing = () => {
 
       <Separator />
 
-      {/* Businesses CTA */}
       <section className="mx-auto max-w-5xl px-6 py-16">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="mb-1 text-2xl font-semibold">
+            <h2 className="mb-1 text-2xl font-semibold tracking-wide">
               Browse Our Businesses
             </h2>
             <p className="text-muted-foreground">
@@ -310,7 +337,7 @@ export const Landing = () => {
             </p>
           </div>
           <Button variant="outline" onClick={() => navigate("/businesses")}>
-            View Businesses <ArrowRight className="ml-2 h-4 w-4" />
+            View Businesses <ArrowUpRight className="ml-2 h-4 w-4" />
           </Button>
         </div>
       </section>

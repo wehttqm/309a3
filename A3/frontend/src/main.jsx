@@ -17,6 +17,7 @@ import { ProtectedRoute } from "./components/protected-route"
 import { RegularProfile } from "@/pages/user/regular/profile"
 import { BusinessProfile } from "@/pages/user/business/profile"
 import { AdminProfile } from "@/pages/user/admin/profile"
+
 import { AdminUsersPage } from "@/pages/user/admin/users"
 import { AdminBusinessesPage } from "@/pages/user/admin/businesses"
 import { AdminPositionTypesPage } from "@/pages/user/admin/position-types"
@@ -24,13 +25,15 @@ import { AdminQualificationsPage } from "@/pages/user/admin/qualifications"
 import { RegularJobs } from "@/pages/user/regular/jobs"
 import { RegularInterests } from "@/pages/user/regular/interests"
 import { RegularInvitations } from "@/pages/user/regular/invitations"
+import { RegularQualificationsPage } from "@/pages/user/regular/qualifications"
+import { QualificationDetailsPage } from "@/pages/user/common/qualification-details"
 import { BusinessJobs } from "@/pages/user/business/jobs"
 import { BusinessJobsCreate } from "@/pages/user/business/jobs-create"
 
 const NotFound = () => {
   return (
     <div className="flex h-screen w-full items-center justify-center text-2xl">
-      404
+      404 Not Found
     </div>
   )
 }
@@ -46,11 +49,14 @@ createRoot(document.getElementById("root")).render(
             <Route path="/businesses" element={<Businesses />} />
             <Route path="/jobs" element={<CommonJobs />} />
 
+            <Route element={<ProtectedRoute />}><Route path="/qualifications/:qualificationId" element={<QualificationDetailsPage />} /></Route>
+
             <Route element={<ProtectedRoute allowedRoles={["regular"]} />}>
               <Route path="/profile/regular" element={<RegularProfile />} />
               <Route path="/jobs/browse" element={<RegularJobs />} />
               <Route path="/my/interests" element={<RegularInterests />} />
               <Route path="/my/invitations" element={<RegularInvitations />} />
+              <Route path="/my/qualifications" element={<RegularQualificationsPage />} />
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={["business"]} />}>

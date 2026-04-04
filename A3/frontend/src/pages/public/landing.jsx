@@ -146,13 +146,10 @@ export const Landing = () => {
           </h1>
 
           <p className="max-w-2xl text-lg text-muted-foreground">
-            Your admin session is active. Use the admin workspace to manage users and businesses.
+            Your admin session is active. Mount your admin routes before adding
+            homepage shortcuts for qualification review, business verification,
+            and system configuration.
           </p>
-
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button onClick={() => navigate("/admin/users")}>Manage Users</Button>
-            <Button variant="outline" onClick={() => navigate("/admin/businesses")}>Manage Businesses</Button>
-          </div>
         </section>
       </div>
     )

@@ -142,39 +142,24 @@ async function GET(req, res) {
       orderBy[sort] = order === "desc" ? "desc" : "asc";
     }
 
-    const select = isAdmin
-      ? {
-          id: true,
-          business_name: true,
-          email: true,
-          role: true,
-          phone_number: true,
-          postal_address: true,
-          owner_name: true,
-          verified: true,
-          activated: true,
-        }
-      : {
-          id: true,
-          business_name: true,
-          email: true,
-          role: true,
-          phone_number: true,
-          postal_address: true,
-        };
-
     const [count, results] = await Promise.all([
       prisma.user.count({ where: filters }),
       prisma.user.findMany({
         where: filters,
-        select,
         skip: (pageNumber - 1) * pageSize,
         take: pageSize,
         orderBy: sort ? orderBy : undefined, // Do not sort by default per spec
       }),
     ]);
 
-    return res.json({ count, results });
+    // Non-admins should NOT see owner_name, verified, or activated
+    const sanitizedResults = results.map((b) => {
+      if (isAdmin) return b;
+      const { owner_name, verified, activated, ...everything_else } = b;
+      return everything_else;
+    });
+
+    return res.json({ count, results: sanitizedResults });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal server error" });

@@ -16,16 +16,19 @@ const PATCH = async (req, res) => {
   if (isNaN(pId)) {
     return res.status(400).json({ error: "Invalid payload." });
   }
+
   try {
-    const existing = await prisma.positionType.findUnique({ where: { id: pId } });
+    const existing = await prisma.positionType.findUnique({
+      where: { id: pId },
+      select: { id: true },
+    });
+
     if (!existing) {
       return res.status(404).json({ error: "Position type not found." });
     }
 
     const p = await prisma.positionType.update({
-      where: {
-        id: pId,
-      },
+      where: { id: pId },
       data: {
         ...(name !== undefined && { name }),
         ...(description !== undefined && { description }),
@@ -54,9 +57,7 @@ const DELETE = async (req, res) => {
 
   try {
     const p = await prisma.positionType.findUnique({
-      where: {
-        id: pId,
-      },
+      where: { id: pId },
       select: {
         id: true,
         _count: {
@@ -80,9 +81,7 @@ const DELETE = async (req, res) => {
     }
 
     await prisma.positionType.delete({
-      where: {
-        id: pId,
-      },
+      where: { id: pId },
     });
 
     return res.status(204).end();

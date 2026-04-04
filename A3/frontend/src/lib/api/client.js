@@ -52,11 +52,14 @@ export const adminApi = {
       body: { verified },
     }),
   getPositionTypes: (query) => apiClient.getPositionTypes({ query }),
-  createPositionType: (body) => apiClient.postPositionTypes({ body }),
-  updatePositionType: (positionTypeId, body) =>
+  createPositionType: (payload) =>
+    apiClient.postPositionTypes({
+      body: payload,
+    }),
+  updatePositionType: (positionTypeId, payload) =>
     apiClient.patchPositionTypesPositionTypeId({
       pathParams: { positionTypeId },
-      body,
+      body: payload,
     }),
   deletePositionType: (positionTypeId) =>
     apiClient.deletePositionTypesPositionTypeId({
@@ -71,5 +74,30 @@ export const adminApi = {
     apiClient.patchQualificationsQualificationId({
       pathParams: { qualificationId },
       body,
+    }),
+}
+
+
+export const positionTypeApi = {
+  list: (query) => apiClient.getPositionTypes({ query }),
+}
+
+export const qualificationApi = {
+  list: (query) => apiClient.getQualifications({ query }),
+  listMine: (query) => apiClient.getUsersMeQualifications({ query }),
+  create: (payload) => apiClient.postQualifications({ body: payload }),
+  getById: (qualificationId) =>
+    apiClient.getQualificationsQualificationId({
+      pathParams: { qualificationId },
+    }),
+  update: (qualificationId, body) =>
+    apiClient.patchQualificationsQualificationId({
+      pathParams: { qualificationId },
+      body,
+    }),
+  uploadDocument: (qualificationId, fileOrBody) =>
+    apiClient.putQualificationsQualificationIdDocument({
+      pathParams: { qualificationId },
+      body: fileOrBody,
     }),
 }

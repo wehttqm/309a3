@@ -41,7 +41,7 @@ export function Profile({
         acc[field.id] = getNestedValue(user, field.id) ?? ""
         return acc
       }, {}),
-    [fields, user],
+    [fields, user]
   )
 
   const {
@@ -80,27 +80,22 @@ export function Profile({
           },
         })
       } else if (user.role === "business") {
-        await apiClient.patchBusinessesMe({
-          body: {
-            business_name: (data as any).business_name,
-            owner_name: (data as any).owner_name,
-            phone_number: (data as any).phone_number,
-            postal_address: (data as any).postal_address,
-            biography: (data as any).biography,
-            location: {
-              lat:
-                (data as any)["location.lat"] === "" ||
-                (data as any)["location.lat"] == null
-                  ? null
-                  : Number((data as any)["location.lat"]),
-              lon:
-                (data as any)["location.lon"] === "" ||
-                (data as any)["location.lon"] == null
-                  ? null
-                  : Number((data as any)["location.lon"]),
-            },
+        const latValue = data.location?.lat ?? null
+        const lonValue = data.location?.lon ?? null
+
+        const payload: any = {
+          business_name: data.business_name,
+          owner_name: data.owner_name,
+          phone_number: data.phone_number,
+          postal_address: data.postal_address,
+          biography: data.biography,
+          location: {
+            lat: latValue === "" ? null : latValue,
+            lon: lonValue === "" ? null : lonValue,
           },
-        })
+        }
+
+        await apiClient.patchBusinessesMe({ body: payload })
       }
 
       await refreshUser()
@@ -209,7 +204,10 @@ export function Profile({
                   {isEditing ? (
                     <div className="space-y-1">
                       {f.type === "textarea" ? (
-                        <Textarea {...register(f.id as any)} rows={f.rows || 4} />
+                        <Textarea
+                          {...register(f.id as any)}
+                          rows={f.rows || 4}
+                        />
                       ) : (
                         <Input
                           type={f.type || "text"}
@@ -220,7 +218,10 @@ export function Profile({
 
                       {errors[f.id as keyof ProfileFormValues] && (
                         <p className="text-xs text-destructive">
-                          {String(errors[f.id as keyof ProfileFormValues]?.message || "")}
+                          {String(
+                            errors[f.id as keyof ProfileFormValues]?.message ||
+                              ""
+                          )}
                         </p>
                       )}
                     </div>

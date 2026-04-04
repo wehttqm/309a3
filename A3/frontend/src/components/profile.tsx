@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { RoleBadge } from "@/components/role-badge"
+import { RoleBadge } from "@/components/role-badge.tsx"
 
 // Icons
 import { Pencil, Check, X } from "lucide-react"

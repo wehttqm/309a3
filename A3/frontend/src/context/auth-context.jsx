@@ -7,6 +7,7 @@ import {
   useState,
 } from "react"
 import { authApi, resolveApiUrl, TOKEN_KEY } from "@/lib/api/client"
+import { Toaster } from "@/components/ui/sonner"
 
 const AuthContext = createContext(null)
 
@@ -95,7 +96,7 @@ export function AuthProvider({ children }) {
           email: claims.email || "",
           name: "Admin",
         },
-        role,
+        role
       )
     }
 
@@ -139,7 +140,7 @@ export function AuthProvider({ children }) {
         throw error
       }
     },
-    [clearSession, getCurrentUser],
+    [clearSession, getCurrentUser]
   )
 
   const logout = useCallback(() => {
@@ -172,10 +173,15 @@ export function AuthProvider({ children }) {
       registerRegular,
       registerBusiness,
       restoreSession,
-    ],
+    ]
   )
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={value}>
+      <Toaster />
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
 export function useAuth() {

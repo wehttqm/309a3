@@ -15,6 +15,7 @@ import { RoleBadge } from "@/components/role-badge"
 
 // Icons
 import { Pencil, Check, X } from "lucide-react"
+import { toast } from "sonner"
 
 function getNestedValue(obj: any, path: string) {
   return path.split(".").reduce((acc, key) => acc?.[key], obj)
@@ -31,7 +32,6 @@ export function Profile({
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
 
   type ProfileFormValues = z.infer<typeof profileSchema>
 
@@ -65,7 +65,6 @@ export function Profile({
 
     setIsSaving(true)
     setError("")
-    setSuccess("")
 
     try {
       if (user.role === "regular") {
@@ -99,7 +98,7 @@ export function Profile({
       }
 
       await refreshUser()
-      setSuccess("Profile updated.")
+      toast.success("Profile updated.")
       setIsEditing(false)
     } catch (err: any) {
       setError(err?.message || "Failed to update profile.")
@@ -144,7 +143,6 @@ export function Profile({
                   onClick={() => {
                     reset(dynamicDefaults)
                     setError("")
-                    setSuccess("")
                     setIsEditing(false)
                   }}
                 >
@@ -170,12 +168,6 @@ export function Profile({
         {error ? (
           <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {error}
-          </div>
-        ) : null}
-
-        {success ? (
-          <div className="mb-4 rounded-md border border-emerald-300/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">
-            {success}
           </div>
         ) : null}
 

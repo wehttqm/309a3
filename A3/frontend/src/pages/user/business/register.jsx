@@ -187,11 +187,6 @@ export const BusinessRegister = () => {
                 {error}
               </div>
             ) : null}
-            {success ? (
-              <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">
-                {success}
-              </div>
-            ) : null}
 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? "Creating account..." : "Create business account"}

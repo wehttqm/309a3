@@ -1,37 +1,47 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useAuth } from "@/context/auth-context.jsx"
+import { apiClient } from "@/lib/api/client"
 
 // UI Components
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { RoleBadge } from "@/components/role-badge"
 
 // Icons
 import { Pencil, Check, X } from "lucide-react"
 
+function getNestedValue(obj: any, path: string) {
+  return path.split(".").reduce((acc, key) => acc?.[key], obj)
+}
+
 export function Profile({
   fields,
   profileSchema,
 }: {
-  fields: Array<object>
-  profileSchema: z.ZodObject
+  fields: Array<any>
+  profileSchema: z.ZodObject<any>
 }) {
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
 
   type ProfileFormValues = z.infer<typeof profileSchema>
 
-  const dynamicDefaults = fields.reduce(
-    (acc: any, field: any) => {
-      acc[field.id] = user?.[field.id] || ""
-      return acc
-    },
-    { biography: user?.biography || "" }
+  const dynamicDefaults = useMemo(
+    () =>
+      fields.reduce((acc: any, field: any) => {
+        acc[field.id] = getNestedValue(user, field.id) ?? ""
+        return acc
+      }, {}),
+    [fields, user],
   )
 
   const {
@@ -48,18 +58,74 @@ export function Profile({
     if (user) {
       reset(dynamicDefaults)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, reset])
+  }, [user, reset, dynamicDefaults])
 
-  const onSubmit = (data: ProfileFormValues) => {
-    console.log("Submit:", data)
-    setIsEditing(false)
+  const onSubmit = async (data: ProfileFormValues) => {
+    if (!user) return
+
+    setIsSaving(true)
+    setError("")
+    setSuccess("")
+
+    try {
+      if (user.role === "regular") {
+        await apiClient.patchUsersMe({
+          body: {
+            first_name: (data as any).first_name,
+            last_name: (data as any).last_name,
+            phone_number: (data as any).phone_number,
+            postal_address: (data as any).postal_address,
+            birthday: (data as any).birthday,
+            biography: (data as any).biography,
+          },
+        })
+      } else if (user.role === "business") {
+        await apiClient.patchBusinessesMe({
+          body: {
+            business_name: (data as any).business_name,
+            owner_name: (data as any).owner_name,
+            phone_number: (data as any).phone_number,
+            postal_address: (data as any).postal_address,
+            biography: (data as any).biography,
+            location: {
+              lat:
+                (data as any)["location.lat"] === "" ||
+                (data as any)["location.lat"] == null
+                  ? null
+                  : Number((data as any)["location.lat"]),
+              lon:
+                (data as any)["location.lon"] === "" ||
+                (data as any)["location.lon"] == null
+                  ? null
+                  : Number((data as any)["location.lon"]),
+            },
+          },
+        })
+      }
+
+      await refreshUser()
+      setSuccess("Profile updated.")
+      setIsEditing(false)
+    } catch (err: any) {
+      setError(err?.message || "Failed to update profile.")
+    } finally {
+      setIsSaving(false)
+    }
   }
 
-  const initials =
-    user?.first_name && user?.last_name
-      ? `${user.first_name[0]}${user.last_name[0]}`.toUpperCase()
-      : user?.email?.[0]?.toUpperCase() || "?"
+  const displayName =
+    user?.role === "business"
+      ? user?.business_name || user?.owner_name || user?.email || "Business"
+      : [user?.first_name, user?.last_name].filter(Boolean).join(" ") ||
+        user?.email ||
+        "?"
+
+  const initials = displayName
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2)
 
   if (!user || !user.role) {
     return (
@@ -72,7 +138,6 @@ export function Profile({
   return (
     <div className="mx-auto max-w-200 space-y-8 px-6 py-10">
       <form onSubmit={handleSubmit(onSubmit)}>
-        {/* Header */}
         <div className="mb-8 flex items-center justify-between border-b pb-6">
           <h1 className="text-3xl font-bold">My Profile</h1>
           <div className="flex gap-2">
@@ -82,14 +147,17 @@ export function Profile({
                   type="button"
                   variant="ghost"
                   onClick={() => {
-                    reset()
+                    reset(dynamicDefaults)
+                    setError("")
+                    setSuccess("")
                     setIsEditing(false)
                   }}
                 >
                   <X className="mr-2 h-4 w-4" /> Cancel
                 </Button>
-                <Button type="submit">
-                  <Check className="mr-2 h-4 w-4" /> Save
+                <Button type="submit" disabled={isSaving}>
+                  <Check className="mr-2 h-4 w-4" />
+                  {isSaving ? "Saving..." : "Save"}
                 </Button>
               </>
             ) : (
@@ -104,7 +172,18 @@ export function Profile({
           </div>
         </div>
 
-        {/* Hero */}
+        {error ? (
+          <div className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </div>
+        ) : null}
+
+        {success ? (
+          <div className="mb-4 rounded-md border border-emerald-300/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">
+            {success}
+          </div>
+        ) : null}
+
         <div className="mb-8 flex flex-col items-center gap-y-4">
           <Avatar className="h-32 w-32 border-4 border-background shadow-lg">
             <AvatarImage src={user?.avatar} />
@@ -112,13 +191,10 @@ export function Profile({
               {initials}
             </AvatarFallback>
           </Avatar>
-          <h2 className="text-4xl font-extrabold">
-            {user?.first_name} {user?.last_name}
-          </h2>
+          <h2 className="text-4xl font-extrabold">{displayName}</h2>
           <RoleBadge role={user?.role} />
         </div>
 
-        {/* Table */}
         <Card className="overflow-hidden">
           <CardContent className="divide-y p-0">
             {fields.map((f: any) => (
@@ -132,20 +208,25 @@ export function Profile({
                 <div className="col-span-2">
                   {isEditing ? (
                     <div className="space-y-1">
-                      <Input
-                        type={f.type || "text"}
-                        {...register(f.id as any)}
-                        className="h-9"
-                      />
+                      {f.type === "textarea" ? (
+                        <Textarea {...register(f.id as any)} rows={f.rows || 4} />
+                      ) : (
+                        <Input
+                          type={f.type || "text"}
+                          {...register(f.id as any)}
+                          className="h-9"
+                        />
+                      )}
+
                       {errors[f.id as keyof ProfileFormValues] && (
                         <p className="text-xs text-destructive">
-                          {errors[f.id as keyof ProfileFormValues]?.message}
+                          {String(errors[f.id as keyof ProfileFormValues]?.message || "")}
                         </p>
                       )}
                     </div>
                   ) : (
                     <span className="text-sm">
-                      {(user as any)?.[f.id] || "—"}
+                      {String(getNestedValue(user, f.id) ?? "—")}
                     </span>
                   )}
                 </div>

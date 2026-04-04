@@ -13,8 +13,7 @@ export const regularFields = [
 export const regularProfileSchema = z.object({
   first_name: z.string().min(1, "Required"),
   last_name: z.string().min(1, "Required"),
-  email: z.email("Invalid email"),
-  phone_number: z.string().optional(),
+  email: z.email("Invalid email"),email: z.string().email("Invalid email"),  
   postal_address: z.string().optional(),
   birthday: z.string().optional(),
   biography: z.string().max(500, "Max 500 chars").optional(),

@@ -7,18 +7,77 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
 import { useAuth } from "@/context/auth-context"
 import {
   ArrowUpRight,
   Briefcase,
   Building2,
+  ChevronDown,
   ClipboardCheck,
-  ShieldCheck,
-  UserCheck,
-  Users,
+  Users
 } from "lucide-react"
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+
+const steps = [
+  {
+    num: "01",
+    title: "Create an Account",
+    desc: "Sign up as a worker or business and complete your profile.",
+    detail:
+      "Workers fill out their profile, upload a resume, and submit qualification documents. Businesses register their organization and go through a quick verification process before they can post jobs. The whole thing takes under five minutes.",
+  },
+  {
+    num: "02",
+    title: "Match & Negotiate",
+    desc: "Express interest, get invited, and negotiate terms when both sides align.",
+    detail:
+      "Workers browse open positions and express interest. Businesses can also proactively invite qualified candidates. When both sides show mutual interest, a negotiation window opens to agree on pay, hours, and start date before any commitment is made.",
+  },
+  {
+    num: "03",
+    title: "Get to Work",
+    desc: "Track commitments on both sides and build your record.",
+    detail:
+      "Once terms are agreed, the job is confirmed and tracked on both dashboards. Workers show up, businesses confirm attendance, and completed jobs build a verifiable history on the platform — making future matches faster and more trustworthy.",
+  },
+]
+
+function HowItWorksAccordion() {
+  const [open, setOpen] = useState(null)
+
+  return (
+    <div className="flex flex-col divide-y divide-border">
+      {steps.map(({ num, title, desc, detail }) => {
+        const isOpen = open === num
+        return (
+          <div key={num}>
+            <button
+              className="flex w-full items-center gap-8 py-8 text-left"
+              onClick={() => setOpen(isOpen ? null : num)}
+            >
+              <span className="w-12 shrink-0 text-3xl font-bold tracking-tight text-foreground/60">
+                {num}
+              </span>
+              <div className="flex-1">
+                <p className="mb-1 text-base font-medium">{title}</p>
+                <p className="text-sm text-muted-foreground">{desc}</p>
+              </div>
+              <ChevronDown
+                className={`h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+            {isOpen && (
+              <p className="pb-8 pl-20 pr-8 text-sm text-muted-foreground leading-relaxed">
+                {detail}
+              </p>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
 export const Landing = () => {
   const navigate = useNavigate()
@@ -192,9 +251,6 @@ export const Landing = () => {
             >
               Join as Business
             </Button>
-            <Button size="lg" variant="ghost" onClick={() => navigate("/login")}>
-              Log In
-            </Button>
           </div>
 
           {/* Testimonial bar */}
@@ -221,115 +277,59 @@ export const Landing = () => {
         </div>
       </section>
 
-      <Separator />
-
       <section className="mx-auto max-w-5xl px-6 py-16">
-        <h2 className="mb-10 text-center text-2xl font-semibold tracking-wide">
-          How It Works
+        <h2 className="mb-1 text-center text-3xl font-semibold tracking-tight">
+          Here's how we make it easy
         </h2>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <UserCheck className="mb-2 h-8 w-8 text-primary" />
-              <CardTitle className="text-lg">1. Create an Account</CardTitle>
-              <CardDescription>
-                Sign up as a worker or business and complete your profile.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader>
-              <Briefcase className="mb-2 h-8 w-8 text-primary" />
-              <CardTitle className="text-lg">2. Match & Negotiate</CardTitle>
-              <CardDescription>
-                Express interest, get invited, and negotiate terms when both sides align.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader>
-              <ClipboardCheck className="mb-2 h-8 w-8 text-primary" />
-              <CardTitle className="text-lg">3. Get to Work</CardTitle>
-              <CardDescription>
-                Track commitments on both sides and build your record.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
+        <p className="mb-12 text-center text-sm text-muted-foreground">
+          From signup to your first shift — a simple three-step process.
+        </p>
+        <HowItWorksAccordion />
       </section>
 
-      <Separator />
-
-      <section className="mx-auto max-w-5xl px-6 py-16">
-        <h2 className="mb-10 text-center text-2xl font-semibold tracking-wide">
-          Who Is This For?
-        </h2>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <Card className="flex flex-col">
+      <section className="mx-auto max-w-5xl px-6 py-24">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Card className="flex flex-col justify-between">
             <CardHeader>
-              <Users className="mb-1 h-7 w-7 text-primary" />
-              <CardTitle>Workers</CardTitle>
+              <CardTitle className="text-xl">Looking for work?</CardTitle>
               <CardDescription>
-                Browse jobs, submit qualifications, and manage your commitments.
+                Browse open shifts, get matched with businesses, and start building your record.
               </CardDescription>
             </CardHeader>
-            <CardContent className="mt-auto">
+            <CardContent>
               <Button
-                className="w-full group"
+                className="group"
                 onClick={() => navigate("/register/regular")}
               >
-                Sign Up as Worker{" "}
+                Find your next shift{" "}
                 <ArrowUpRight className="ml-2 h-4 w-4 transition-transform duration-200 rotate-45 group-hover:rotate-0" />
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="flex flex-col">
+          <Card className="flex flex-col justify-between">
             <CardHeader>
-              <Building2 className="mb-1 h-7 w-7 text-primary" />
-              <CardTitle>Businesses</CardTitle>
+              <CardTitle className="text-xl">Need to hire?</CardTitle>
               <CardDescription>
-                Post jobs, find qualified candidates, and manage your workforce.
+                Post a job, browse qualified candidates, and fill your roster faster than traditional hiring.
               </CardDescription>
             </CardHeader>
-            <CardContent className="mt-auto">
+            <CardContent>
               <Button
-                className="w-full"
                 variant="outline"
                 onClick={() => navigate("/register/business")}
               >
-                Sign Up as Business
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="flex flex-col">
-            <CardHeader>
-              <ShieldCheck className="mb-1 h-7 w-7 text-primary" />
-              <CardTitle>Administrators</CardTitle>
-              <CardDescription>
-                Verify businesses, manage qualifications, and configure the platform.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="mt-auto">
-              <Button
-                className="w-full"
-                variant="ghost"
-                onClick={() => navigate("/login")}
-              >
-                Admin Login
+                Post your first job <ArrowUpRight className="ml-2 h-4 w-4" />
               </Button>
             </CardContent>
           </Card>
         </div>
       </section>
 
-      <Separator />
-
       <section className="mx-auto max-w-5xl px-6 py-16">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="mb-1 text-2xl font-semibold tracking-wide">
+            <h2 className="mb-1 text-2xl font-semibold tracking-tight">
               Browse Our Businesses
             </h2>
             <p className="text-muted-foreground">

@@ -35,13 +35,16 @@ export default function Navbar() {
       <nav className="flex items-center justify-between rounded-full border border-blue-100/60 bg-white/75 px-6 py-2.5 shadow-sm backdrop-blur-md">
 
         {/* Left: Logo */}
-        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+        <button
+          onClick={() => navigate("/")}
+          className="flex items-center cursor-pointer gap-2 text-sm text-foreground transition-colors hover:text-foreground"
+        >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="5.5" cy="9" r="4.5" stroke="currentColor" strokeWidth="1.5" />
             <circle cx="12.5" cy="9" r="4.5" stroke="currentColor" strokeWidth="1.5" />
           </svg>
           StaffLink
-        </div>
+        </button>
 
         {/* Middle: Role-based links */}
         <div className="hidden items-center gap-4 text-sm text-muted-foreground md:flex">

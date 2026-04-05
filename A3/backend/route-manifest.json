@@ -2,11 +2,31 @@
   {
     "path": "/system/reset-cooldown",
     "openapiPath": "/system/reset-cooldown",
+    "method": "GET",
+    "operationId": "getSystemResetCooldown",
+    "tag": "System",
+    "pathParams": [],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/system/reset-cooldown",
+    "openapiPath": "/system/reset-cooldown",
     "method": "PATCH",
     "operationId": "patchSystemResetCooldown",
     "tag": "System",
     "pathParams": [],
     "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/system/availability-timeout",
+    "openapiPath": "/system/availability-timeout",
+    "method": "GET",
+    "operationId": "getSystemAvailabilityTimeout",
+    "tag": "System",
+    "pathParams": [],
+    "bodyKind": null,
     "multipartFileField": null
   },
   {
@@ -22,11 +42,31 @@
   {
     "path": "/system/job-start-window",
     "openapiPath": "/system/job-start-window",
+    "method": "GET",
+    "operationId": "getSystemJobStartWindow",
+    "tag": "System",
+    "pathParams": [],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
+    "path": "/system/job-start-window",
+    "openapiPath": "/system/job-start-window",
     "method": "PATCH",
     "operationId": "patchSystemJobStartWindow",
     "tag": "System",
     "pathParams": [],
     "bodyKind": "json",
+    "multipartFileField": null
+  },
+  {
+    "path": "/system/negotiation-window",
+    "openapiPath": "/system/negotiation-window",
+    "method": "GET",
+    "operationId": "getSystemNegotiationWindow",
+    "tag": "System",
+    "pathParams": [],
+    "bodyKind": null,
     "multipartFileField": null
   },
   {

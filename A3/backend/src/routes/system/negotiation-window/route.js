@@ -1,19 +1,37 @@
 const { prisma } = require("../../../utils/prisma_client.js");
 
+async function readSettingValue(key) {
+  const setting = await prisma.systemSetting.findUnique({
+    where: { key },
+  });
+
+  return Number(setting?.value);
+}
+
+const GET = async (req, res) => {
+  try {
+    const negotiation_window = await readSettingValue("negotiation-window");
+    return res.status(200).json({ negotiation_window });
+  } catch (error) {
+    console.error("GET /system/negotiation-window error:", error);
+    return res.status(500).json({ error: "Internal server error." });
+  }
+};
+
 const PATCH = async (req, res) => {
   try {
     const { negotiation_window } = req.body;
 
-    if (
-      negotiation_window === undefined ||
-      typeof negotiation_window !== "number"
-    ) {
+    if (negotiation_window === undefined || typeof negotiation_window !== "number") {
       return res
         .status(400)
         .json({ error: "negotiation_window must be a number." });
     }
+
     if (negotiation_window <= 0) {
-      return res.status(400).json({ error: "negotiation_window must be > 0." });
+      return res
+        .status(400)
+        .json({ error: "negotiation_window must be > 0." });
     }
 
     await prisma.systemSetting.update({
@@ -28,4 +46,4 @@ const PATCH = async (req, res) => {
   }
 };
 
-module.exports = { PATCH };
+module.exports = { GET, PATCH };

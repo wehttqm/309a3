@@ -5,9 +5,13 @@
 const DEFAULT_BACKEND_URL = "http://localhost:3000";
 
 export const routeManifest = {
+  "getSystemResetCooldown": {"path":"/system/reset-cooldown","openapiPath":"/system/reset-cooldown","method":"GET","operationId":"getSystemResetCooldown","tag":"System","pathParams":[],"bodyKind":null,"multipartFileField":null},
   "patchSystemResetCooldown": {"path":"/system/reset-cooldown","openapiPath":"/system/reset-cooldown","method":"PATCH","operationId":"patchSystemResetCooldown","tag":"System","pathParams":[],"bodyKind":"json","multipartFileField":null},
+  "getSystemAvailabilityTimeout": {"path":"/system/availability-timeout","openapiPath":"/system/availability-timeout","method":"GET","operationId":"getSystemAvailabilityTimeout","tag":"System","pathParams":[],"bodyKind":null,"multipartFileField":null},
   "patchSystemAvailabilityTimeout": {"path":"/system/availability-timeout","openapiPath":"/system/availability-timeout","method":"PATCH","operationId":"patchSystemAvailabilityTimeout","tag":"System","pathParams":[],"bodyKind":"json","multipartFileField":null},
+  "getSystemJobStartWindow": {"path":"/system/job-start-window","openapiPath":"/system/job-start-window","method":"GET","operationId":"getSystemJobStartWindow","tag":"System","pathParams":[],"bodyKind":null,"multipartFileField":null},
   "patchSystemJobStartWindow": {"path":"/system/job-start-window","openapiPath":"/system/job-start-window","method":"PATCH","operationId":"patchSystemJobStartWindow","tag":"System","pathParams":[],"bodyKind":"json","multipartFileField":null},
+  "getSystemNegotiationWindow": {"path":"/system/negotiation-window","openapiPath":"/system/negotiation-window","method":"GET","operationId":"getSystemNegotiationWindow","tag":"System","pathParams":[],"bodyKind":null,"multipartFileField":null},
   "patchSystemNegotiationWindow": {"path":"/system/negotiation-window","openapiPath":"/system/negotiation-window","method":"PATCH","operationId":"patchSystemNegotiationWindow","tag":"System","pathParams":[],"bodyKind":"json","multipartFileField":null},
   "postAuthResetsResetToken": {"path":"/auth/resets/:resetToken","openapiPath":"/auth/resets/{resetToken}","method":"POST","operationId":"postAuthResetsResetToken","tag":"Auth","pathParams":["resetToken"],"bodyKind":"json","multipartFileField":null},
   "postAuthResets": {"path":"/auth/resets","openapiPath":"/auth/resets","method":"POST","operationId":"postAuthResets","tag":"Auth","pathParams":[],"bodyKind":"json","multipartFileField":null},
@@ -227,10 +231,24 @@ export function createApiClient({ baseUrl = DEFAULT_BACKEND_URL, getToken } = {}
 
   return {
     request,
+    getSystemResetCooldown: (options = {}) => request({
+      operationId: "getSystemResetCooldown",
+      path: "/system/reset-cooldown",
+      method: "GET",
+      ...options,
+    }),
+
     patchSystemResetCooldown: (options = {}) => request({
       operationId: "patchSystemResetCooldown",
       path: "/system/reset-cooldown",
       method: "PATCH",
+      ...options,
+    }),
+
+    getSystemAvailabilityTimeout: (options = {}) => request({
+      operationId: "getSystemAvailabilityTimeout",
+      path: "/system/availability-timeout",
+      method: "GET",
       ...options,
     }),
 
@@ -241,10 +259,24 @@ export function createApiClient({ baseUrl = DEFAULT_BACKEND_URL, getToken } = {}
       ...options,
     }),
 
+    getSystemJobStartWindow: (options = {}) => request({
+      operationId: "getSystemJobStartWindow",
+      path: "/system/job-start-window",
+      method: "GET",
+      ...options,
+    }),
+
     patchSystemJobStartWindow: (options = {}) => request({
       operationId: "patchSystemJobStartWindow",
       path: "/system/job-start-window",
       method: "PATCH",
+      ...options,
+    }),
+
+    getSystemNegotiationWindow: (options = {}) => request({
+      operationId: "getSystemNegotiationWindow",
+      path: "/system/negotiation-window",
+      method: "GET",
       ...options,
     }),
 

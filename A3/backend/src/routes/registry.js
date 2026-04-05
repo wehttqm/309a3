@@ -8,7 +8,14 @@ function defineRoute(path, method, ...middlewareIds) {
 
 const routeDefinitions = [
   // System
+  defineRoute("/system/reset-cooldown", "GET", "strictAuth", "checkRoleAdmin"),
   defineRoute("/system/reset-cooldown", "PATCH", "strictAuth", "checkRoleAdmin"),
+  defineRoute(
+    "/system/availability-timeout",
+    "GET",
+    "strictAuth",
+    "checkRoleAdmin",
+  ),
   defineRoute(
     "/system/availability-timeout",
     "PATCH",
@@ -17,7 +24,19 @@ const routeDefinitions = [
   ),
   defineRoute(
     "/system/job-start-window",
+    "GET",
+    "strictAuth",
+    "checkRoleAdmin",
+  ),
+  defineRoute(
+    "/system/job-start-window",
     "PATCH",
+    "strictAuth",
+    "checkRoleAdmin",
+  ),
+  defineRoute(
+    "/system/negotiation-window",
+    "GET",
     "strictAuth",
     "checkRoleAdmin",
   ),

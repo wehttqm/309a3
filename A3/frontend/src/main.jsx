@@ -21,6 +21,7 @@ import { AdminUsersPage } from "@/pages/user/admin/users"
 import { BusinessJobs } from "@/pages/user/business/jobs"
 import { AdminPositionTypesPage } from "@/pages/user/admin/position-types"
 import { AdminQualificationsPage } from "@/pages/user/admin/qualifications"
+import { AdminSystemConfigPage } from "@/pages/user/admin/system-config"
 import { BusinessJobsCreate } from "@/pages/user/business/jobs-create"
 import { BusinessProfile } from "@/pages/user/business/profile"
 import { RegularInterests } from "@/pages/user/regular/interests"
@@ -73,6 +74,7 @@ createRoot(document.getElementById("root")).render(
               <Route path="/admin/businesses" element={<AdminBusinessesPage />} />
               <Route path="/admin/positions" element={<AdminPositionTypesPage />} />
               <Route path="/admin/qualifications" element={<AdminQualificationsPage />} />
+              <Route path="/admin/config" element={<AdminSystemConfigPage />} />
             </Route>
           </Route>
           <Route path="/register/regular" element={<RegularRegister />} />

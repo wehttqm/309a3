@@ -75,6 +75,26 @@ export const adminApi = {
       pathParams: { qualificationId },
       body,
     }),
+  getResetCooldown: () => apiClient.getSystemResetCooldown(),
+  setResetCooldown: (reset_cooldown) =>
+    apiClient.patchSystemResetCooldown({
+      body: { reset_cooldown },
+    }),
+  getNegotiationWindow: () => apiClient.getSystemNegotiationWindow(),
+  setNegotiationWindow: (negotiation_window) =>
+    apiClient.patchSystemNegotiationWindow({
+      body: { negotiation_window },
+    }),
+  getJobStartWindow: () => apiClient.getSystemJobStartWindow(),
+  setJobStartWindow: (job_start_window) =>
+    apiClient.patchSystemJobStartWindow({
+      body: { job_start_window },
+    }),
+  getAvailabilityTimeout: () => apiClient.getSystemAvailabilityTimeout(),
+  setAvailabilityTimeout: (availability_timeout) =>
+    apiClient.patchSystemAvailabilityTimeout({
+      body: { availability_timeout },
+    }),
 }
 
 

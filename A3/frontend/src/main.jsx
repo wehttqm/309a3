@@ -29,6 +29,7 @@ import { RegularQualificationsPage } from "@/pages/user/regular/qualifications"
 import { QualificationDetailsPage } from "@/pages/user/common/qualification-details"
 import { RegularJobs } from "@/pages/user/regular/jobs"
 import { RegularProfile } from "@/pages/user/regular/profile"
+import ResumeUpload from "./pages/user/regular/resume-upload"
 
 const NotFound = () => {
   return (
@@ -57,6 +58,7 @@ createRoot(document.getElementById("root")).render(
               <Route path="/my/interests" element={<RegularInterests />} />
               <Route path="/my/invitations" element={<RegularInvitations />} />
               <Route path="/my/qualifications" element={<RegularQualificationsPage />} />
+              <Route path="/resume" element={<ResumeUpload/>} />
             </Route>
 
             <Route element={<ProtectedRoute allowedRoles={["business"]} />}>

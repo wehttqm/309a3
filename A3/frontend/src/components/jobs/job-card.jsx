@@ -46,6 +46,23 @@ function getRegularBrowseState(job) {
   return null
 }
 
+function formatWorker(worker) {
+  if (!worker) return "—"
+  return `${worker.first_name} ${worker.last_name}`
+}
+
+function isDuringScheduledWindow(job) {
+  if (!job?.start_time || !job?.end_time) return false
+
+  const now = Date.now()
+  const start = new Date(job.start_time).getTime()
+  const end = new Date(job.end_time).getTime()
+
+  if (Number.isNaN(start) || Number.isNaN(end)) return false
+
+  return start <= now && now < end
+}
+
 export function JobCard({
   role,
   mode,
@@ -57,12 +74,16 @@ export function JobCard({
   onEdit,
   onDelete,
   onManageCandidates,
+  onReportNoShow,
 }) {
   const title = job?.position_type?.name || `Job #${job?.id}`
   const businessName = job?.business?.business_name || "—"
   const isMutual = Boolean(job?.mutual)
   const showAvailableJobFields = role === "regular" && mode === "browse"
+  const showBusinessPostingFields = role === "business" && mode === "postings"
   const regularBrowseState = showAvailableJobFields ? getRegularBrowseState(job) : null
+  const canReportNoShow =
+    showBusinessPostingFields && job?.status === "filled" && isDuringScheduledWindow(job)
 
   return (
     <Card className="h-full">
@@ -87,8 +108,9 @@ export function JobCard({
         <Detail label="Pay" value={formatSalaryRange(job)} />
         <Detail label="Start" value={formatDateTime(job?.start_time)} />
         <Detail label="End" value={formatDateTime(job?.end_time)} />
+        <Detail label="Updated" value={formatDateTime(job?.updatedAt)} />
 
-        {showAvailableJobFields ? <Detail label="Updated" value={formatDateTime(job?.updatedAt)} /> : null}
+        {showBusinessPostingFields ? <Detail label="Worker" value={formatWorker(job?.worker)} /> : null}
 
         {job?.distance !== undefined ? <Detail label="Distance" value={formatDistance(job.distance)} /> : null}
 
@@ -150,15 +172,32 @@ export function JobCard({
 
         {role === "business" && mode === "postings" ? (
           <>
-            <Button variant="outline" disabled={busy} onClick={() => onEdit?.(job)}>
-              Edit
-            </Button>
-            <Button variant="outline" disabled={busy} onClick={() => onManageCandidates?.(job)}>
-              Candidates
-            </Button>
-            <Button variant="destructive" disabled={busy} onClick={() => onDelete?.(job)}>
-              Delete
-            </Button>
+            {job?.status === "open" ? (
+              <>
+                <Button variant="outline" disabled={busy} onClick={() => onEdit?.(job)}>
+                  Edit
+                </Button>
+                <Button variant="outline" disabled={busy} onClick={() => onManageCandidates?.(job)}>
+                  Candidates
+                </Button>
+                <Button variant="destructive" disabled={busy} onClick={() => onDelete?.(job)}>
+                  Delete
+                </Button>
+              </>
+            ) : null}
+
+            {job?.status === "filled" ? (
+              <>
+                <Button variant="outline" disabled>
+                  Filled
+                </Button>
+                {canReportNoShow ? (
+                  <Button variant="destructive" disabled={busy} onClick={() => onReportNoShow?.(job)}>
+                    Report No-Show
+                  </Button>
+                ) : null}
+              </>
+            ) : null}
           </>
         ) : null}
       </CardFooter>

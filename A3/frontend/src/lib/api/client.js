@@ -121,3 +121,8 @@ export const qualificationApi = {
       body: fileOrBody,
     }),
 }
+
+
+export const regularJobsApi = {
+  listMine: (query) => apiClient.getUsersMeJobs({ query }),
+}

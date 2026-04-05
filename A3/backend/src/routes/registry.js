@@ -92,6 +92,7 @@ const routeDefinitions = [
   defineRoute("/users/me/available", "PATCH", "strictAuth", "checkRoleRegular"),
   defineRoute("/users/me/invitations", "GET", "strictAuth", "checkRoleRegular"),
   defineRoute("/users/me/interests", "GET", "strictAuth", "checkRoleRegular"),
+  defineRoute("/users/me/jobs", "GET", "strictAuth", "checkRoleRegular"),
   defineRoute("/users/me/qualifications", "GET", "strictAuth", "checkRoleRegular"),
 
   // Businesses

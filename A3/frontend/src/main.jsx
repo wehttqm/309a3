@@ -26,6 +26,7 @@ import { BusinessJobsCreate } from "@/pages/user/business/jobs-create"
 import { BusinessProfile } from "@/pages/user/business/profile"
 import { RegularInterests } from "@/pages/user/regular/interests"
 import { RegularInvitations } from "@/pages/user/regular/invitations"
+import { RegularMyJobsPage } from "@/pages/user/regular/my-jobs"
 import { RegularQualificationsPage } from "@/pages/user/regular/qualifications"
 import { QualificationDetailsPage } from "@/pages/user/common/qualification-details"
 import { RegularJobs } from "@/pages/user/regular/jobs"
@@ -58,6 +59,7 @@ createRoot(document.getElementById("root")).render(
               <Route path="/jobs/browse" element={<RegularJobs />} />
               <Route path="/my/interests" element={<RegularInterests />} />
               <Route path="/my/invitations" element={<RegularInvitations />} />
+              <Route path="/my/jobs" element={<RegularMyJobsPage />} />
               <Route path="/my/qualifications" element={<RegularQualificationsPage />} />
               <Route path="/resume" element={<ResumeUpload/>} />
             </Route>

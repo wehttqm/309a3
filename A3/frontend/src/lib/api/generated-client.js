@@ -26,6 +26,7 @@ export const routeManifest = {
   "patchUsersMeAvailable": {"path":"/users/me/available","openapiPath":"/users/me/available","method":"PATCH","operationId":"patchUsersMeAvailable","tag":"Users","pathParams":[],"bodyKind":"json","multipartFileField":null},
   "getUsersMeInvitations": {"path":"/users/me/invitations","openapiPath":"/users/me/invitations","method":"GET","operationId":"getUsersMeInvitations","tag":"Users","pathParams":[],"bodyKind":null,"multipartFileField":null},
   "getUsersMeInterests": {"path":"/users/me/interests","openapiPath":"/users/me/interests","method":"GET","operationId":"getUsersMeInterests","tag":"Users","pathParams":[],"bodyKind":null,"multipartFileField":null},
+  "getUsersMeJobs": {"path":"/users/me/jobs","openapiPath":"/users/me/jobs","method":"GET","operationId":"getUsersMeJobs","tag":"Users","pathParams":[],"bodyKind":null,"multipartFileField":null},
   "getUsersMeQualifications": {"path":"/users/me/qualifications","openapiPath":"/users/me/qualifications","method":"GET","operationId":"getUsersMeQualifications","tag":"Users","pathParams":[],"bodyKind":null,"multipartFileField":null},
   "postBusinesses": {"path":"/businesses","openapiPath":"/businesses","method":"POST","operationId":"postBusinesses","tag":"Businesses","pathParams":[],"bodyKind":"json","multipartFileField":null},
   "getBusinesses": {"path":"/businesses","openapiPath":"/businesses","method":"GET","operationId":"getBusinesses","tag":"Businesses","pathParams":[],"bodyKind":null,"multipartFileField":null},
@@ -374,6 +375,13 @@ export function createApiClient({ baseUrl = DEFAULT_BACKEND_URL, getToken } = {}
     getUsersMeInterests: (options = {}) => request({
       operationId: "getUsersMeInterests",
       path: "/users/me/interests",
+      method: "GET",
+      ...options,
+    }),
+
+    getUsersMeJobs: (options = {}) => request({
+      operationId: "getUsersMeJobs",
+      path: "/users/me/jobs",
       method: "GET",
       ...options,
     }),

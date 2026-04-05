@@ -19,6 +19,12 @@ function addDays(baseDate, days, hour = 9) {
   return value;
 }
 
+function addHours(baseDate, hours) {
+  const value = new Date(baseDate);
+  value.setTime(value.getTime() + hours * 60 * 60 * 1000);
+  return value;
+}
+
 async function upsertSetting(key, value) {
   return prisma.systemSetting.upsert({
     where: { key },
@@ -315,6 +321,90 @@ async function main() {
         status: "open",
       },
     ],
+  });
+
+  // Seed committed jobs so the /my/jobs route has meaningful data to display.
+  await prisma.jobPosting.createMany({
+    data: [
+      {
+        businessId: businessOne.id,
+        positionTypeId: generalLabour.id,
+        filledByUserId: regularUser.id,
+        salaryMin: 23,
+        salaryMax: 27,
+        startTime: addDays(now, 1, 9),
+        endTime: addDays(now, 1, 17),
+        note: "Upcoming filled shift for /my/jobs testing",
+        status: "filled",
+      },
+      {
+        businessId: businessTwo.id,
+        positionTypeId: warehouseAssociate.id,
+        filledByUserId: regularUser.id,
+        salaryMin: 24,
+        salaryMax: 28,
+        startTime: addHours(now, -2),
+        endTime: addHours(now, 4),
+        note: "Active in-progress shift for /my/jobs testing",
+        status: "filled",
+      },
+      {
+        businessId: businessThree.id,
+        positionTypeId: dockSupport.id,
+        filledByUserId: regularUser.id,
+        salaryMin: 25,
+        salaryMax: 29,
+        startTime: addDays(now, -3, 8),
+        endTime: addDays(now, -3, 16),
+        note: "Completed shift for /my/jobs testing",
+        status: "completed",
+      },
+      {
+        businessId: businessOne.id,
+        positionTypeId: generalLabour.id,
+        filledByUserId: regularUser.id,
+        salaryMin: 22,
+        salaryMax: 24,
+        startTime: addDays(now, -1, 9),
+        endTime: addDays(now, -1, 17),
+        note: "Canceled commitment for /my/jobs testing",
+        status: "canceled",
+      },
+    ],
+  });
+
+  const negotiationJob = await prisma.jobPosting.create({
+    data: {
+      businessId: businessTwo.id,
+      positionTypeId: warehouseAssociate.id,
+      salaryMin: 26,
+      salaryMax: 30,
+      startTime: addDays(now, 2, 12),
+      endTime: addDays(now, 2, 20),
+      note: "Active negotiation seed job",
+      status: "open",
+    },
+  });
+
+  const mutualInterest = await prisma.interest.create({
+    data: {
+      userId: regularUser.id,
+      jobId: negotiationJob.id,
+      candidateInterested: true,
+      businessInterested: true,
+    },
+  });
+
+  await prisma.negotiation.create({
+    data: {
+      jobId: negotiationJob.id,
+      userId: regularUser.id,
+      interestId: mutualInterest.id,
+      status: "active",
+      expiresAt: addHours(now, 6),
+      candidateDecision: null,
+      businessDecision: null,
+    },
   });
 
   console.log("Seed complete.");

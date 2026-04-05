@@ -214,6 +214,16 @@
     "multipartFileField": null
   },
   {
+    "path": "/users/me/jobs",
+    "openapiPath": "/users/me/jobs",
+    "method": "GET",
+    "operationId": "getUsersMeJobs",
+    "tag": "Users",
+    "pathParams": [],
+    "bodyKind": null,
+    "multipartFileField": null
+  },
+  {
     "path": "/users/me/qualifications",
     "openapiPath": "/users/me/qualifications",
     "method": "GET",

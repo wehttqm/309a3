@@ -1,8 +1,10 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { apiClient } from "@/lib/api/client"
 import { FileText, X, Upload, Eye } from "lucide-react"
+
+const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
 export default function ResumeUpload() {
   const [file, setFile] = useState(null)
@@ -11,6 +13,22 @@ export default function ResumeUpload() {
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
   const [showPreview, setShowPreview] = useState(false)
+  const [resumeUrl, setResumeUrl] = useState(null)
+
+  useEffect(() => {
+    async function fetchResume() {
+      const user = await apiClient.getUsersMe()
+      console.log(user)
+      if (
+        user.resume !== null &&
+        user.resume !== undefined &&
+        user.resume !== ""
+      ) {
+        setResumeUrl(user.resume + `?t=${Date.now()}`)
+      }
+    }
+    fetchResume()
+  }, [])
 
   const handleFileChange = (e) => {
     const selected = e.target.files[0]
@@ -51,7 +69,14 @@ export default function ResumeUpload() {
     setSuccess(false)
 
     try {
-      // Your custom handler here
+      const res = await apiClient.putUsersMeResume({
+        body: {
+          file,
+        },
+      })
+      setResumeUrl(res.resume + `?t=${Date.now()}`)
+      setSuccess(true)
+      setFile(null)
     } catch (err) {
       setError(err?.message ?? "Upload failed.")
     } finally {
@@ -152,6 +177,22 @@ export default function ResumeUpload() {
           {uploading ? "Uploading..." : "Upload Resume"}
         </Button>
       </div>
+      <div className="mb-8 flex items-center justify-between border-b pb-6">
+        <h1 className="text-3xl font-bold">Your Resume</h1>
+      </div>
+      {resumeUrl ? (
+        <div>
+          <iframe
+            key={resumeUrl}
+            src={VITE_BACKEND_URL + resumeUrl}
+            title="Resume Preview"
+            className="w-full rounded-md border"
+            style={{ height: "480px" }}
+          />
+        </div>
+      ) : (
+        <div>We couldn't find your resume! Have you uploaded one yet?</div>
+      )}
     </div>
   )
 }

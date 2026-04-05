@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { toast } from "sonner"
 
 export const BusinessRegister = () => {
   const navigate = useNavigate()
@@ -25,7 +26,6 @@ export const BusinessRegister = () => {
     lon: "",
   })
   const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const updateField = (key) => (event) => {
@@ -38,7 +38,6 @@ export const BusinessRegister = () => {
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError("")
-    setSuccess("")
     setIsSubmitting(true)
 
     try {
@@ -54,7 +53,9 @@ export const BusinessRegister = () => {
           lon: Number(form.lon),
         },
       })
-      setSuccess("Business account created. It must be activated and verified before use.")
+      toast.success(
+        "Business account created. It must be activated and verified before use."
+      )
       navigate("/login", { replace: true })
     } catch (err) {
       setError(err.message || "Unable to register business.")
@@ -75,44 +76,117 @@ export const BusinessRegister = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="business_name" className="text-sm font-medium">Business name</label>
-              <input id="business_name" value={form.business_name} onChange={updateField("business_name")} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" required />
+              <label htmlFor="business_name" className="text-sm font-medium">
+                Business name
+              </label>
+              <input
+                id="business_name"
+                value={form.business_name}
+                onChange={updateField("business_name")}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                required
+              />
             </div>
             <div className="space-y-2">
-              <label htmlFor="owner_name" className="text-sm font-medium">Owner name</label>
-              <input id="owner_name" value={form.owner_name} onChange={updateField("owner_name")} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" required />
+              <label htmlFor="owner_name" className="text-sm font-medium">
+                Owner name
+              </label>
+              <input
+                id="owner_name"
+                value={form.owner_name}
+                onChange={updateField("owner_name")}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                required
+              />
             </div>
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">Email</label>
-              <input id="email" type="email" value={form.email} onChange={updateField("email")} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" required />
+              <label htmlFor="email" className="text-sm font-medium">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={form.email}
+                onChange={updateField("email")}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                required
+              />
             </div>
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">Password</label>
-              <input id="password" type="password" value={form.password} onChange={updateField("password")} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" required />
+              <label htmlFor="password" className="text-sm font-medium">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={form.password}
+                onChange={updateField("password")}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                required
+              />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label htmlFor="phone_number" className="text-sm font-medium">Phone</label>
-                <input id="phone_number" value={form.phone_number} onChange={updateField("phone_number")} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" required />
+                <label htmlFor="phone_number" className="text-sm font-medium">
+                  Phone
+                </label>
+                <input
+                  id="phone_number"
+                  value={form.phone_number}
+                  onChange={updateField("phone_number")}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  required
+                />
               </div>
               <div className="space-y-2">
-                <label htmlFor="postal_address" className="text-sm font-medium">Postal address</label>
-                <input id="postal_address" value={form.postal_address} onChange={updateField("postal_address")} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" required />
+                <label htmlFor="postal_address" className="text-sm font-medium">
+                  Postal address
+                </label>
+                <input
+                  id="postal_address"
+                  value={form.postal_address}
+                  onChange={updateField("postal_address")}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  required
+                />
               </div>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label htmlFor="lat" className="text-sm font-medium">Latitude</label>
-                <input id="lat" type="number" step="any" value={form.lat} onChange={updateField("lat")} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" required />
+                <label htmlFor="lat" className="text-sm font-medium">
+                  Latitude
+                </label>
+                <input
+                  id="lat"
+                  type="number"
+                  step="any"
+                  value={form.lat}
+                  onChange={updateField("lat")}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  required
+                />
               </div>
               <div className="space-y-2">
-                <label htmlFor="lon" className="text-sm font-medium">Longitude</label>
-                <input id="lon" type="number" step="any" value={form.lon} onChange={updateField("lon")} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" required />
+                <label htmlFor="lon" className="text-sm font-medium">
+                  Longitude
+                </label>
+                <input
+                  id="lon"
+                  type="number"
+                  step="any"
+                  value={form.lon}
+                  onChange={updateField("lon")}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  required
+                />
               </div>
             </div>
 
-            {error ? <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div> : null}
-            {success ? <div className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700">{success}</div> : null}
+            {error ? (
+              <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {error}
+              </div>
+            ) : null}
 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? "Creating account..." : "Create business account"}
@@ -120,7 +194,13 @@ export const BusinessRegister = () => {
           </form>
         </CardContent>
         <CardFooter className="text-sm text-muted-foreground">
-          Already have an account? <Link to="/login" className="ml-1 text-primary underline underline-offset-4">Log in</Link>
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="ml-1 text-primary underline underline-offset-4"
+          >
+            Log in
+          </Link>
         </CardFooter>
       </Card>
     </div>

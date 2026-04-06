@@ -1,5 +1,6 @@
 const { prisma } = require("../../utils/prisma_client.js");
 const { isDiscoverable } = require("../../utils/is_discoverable.js");
+const { get_io } = require("../../utils/socket_state.js");
 
 const formatNegotiation = (negotiation) => ({
   id: negotiation.id,
@@ -170,6 +171,18 @@ const POST = async (req, res) => {
       },
       include: negotiationInclude,
     });
+
+    const io = get_io();
+    if (io) {
+      const negotiationRoom = `negotiation:${negotiation.id}`;
+      const candidateRoom = `account:${interest.userId}`;
+      const businessRoom = `account:${interest.job.businessId}`;
+      io.in(candidateRoom).socketsJoin(negotiationRoom);
+      io.in(businessRoom).socketsJoin(negotiationRoom);
+      const payload = { negotiation_id: negotiation.id };
+      io.to(candidateRoom).emit("negotiation:started", payload);
+      io.to(businessRoom).emit("negotiation:started", payload);
+    }
 
     return res.status(201).json(formatNegotiation(negotiation));
   } catch (error) {

@@ -12,6 +12,31 @@ import { useAuth } from "@/context/auth-context"
 import { ChevronDown } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 
+function getDisplayName(user) {
+  if (!user) return ""
+  if (user.name) return user.name
+  if (user.business_name) return user.business_name
+  if (user.first_name || user.last_name) {
+    return `${user.first_name || ""} ${user.last_name || ""}`.trim()
+  }
+  if (user.owner_name) return user.owner_name
+  return user.email || ""
+}
+
+function getInitials(user) {
+  const displayName = getDisplayName(user)
+
+  if (!displayName) return "?"
+
+  return displayName
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2)
+}
+
 export default function Navbar() {
   const { user, logout, isLoading } = useAuth()
   const navigate = useNavigate()
@@ -21,19 +46,15 @@ export default function Navbar() {
     navigate("/")
   }
 
-  const initials = user?.name
-    ? user.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : "?"
+  const displayName = getDisplayName(user)
+  const initials = getInitials(user)
+
+  const showRealtimeLinks =
+    user?.role === "regular" || user?.role === "business"
 
   return (
     <div className="fixed top-4 left-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl -translate-x-1/2 px-0">
       <nav className="flex items-center justify-between rounded-full border border-blue-100/60 bg-white/75 px-6 py-2.5 shadow-sm backdrop-blur-md">
-        {/* Left: Logo */}
         <button
           onClick={() => navigate("/")}
           className="flex cursor-pointer items-center gap-2 text-sm text-foreground transition-colors hover:text-foreground"
@@ -63,14 +84,10 @@ export default function Navbar() {
           StaffLink
         </button>
 
-        {/* Middle: Role-based links */}
         <div className="hidden items-center gap-4 text-sm text-foreground md:flex">
           {user?.role === "regular" && (
             <>
-              <Link
-                to="/jobs"
-                className="transition-colors hover:text-foreground"
-              >
+              <Link to="/jobs" className="transition-colors hover:text-foreground">
                 Jobs
               </Link>
               <Link
@@ -117,6 +134,23 @@ export default function Navbar() {
             </>
           )}
 
+          {showRealtimeLinks && (
+            <>
+              <Link
+                to="/notifications"
+                className="transition-colors hover:text-foreground"
+              >
+                Notifications
+              </Link>
+              <Link
+                to="/negotiation"
+                className="transition-colors hover:text-foreground"
+              >
+                Negotiation
+              </Link>
+            </>
+          )}
+
           {user?.role === "admin" && (
             <>
               <Link
@@ -153,7 +187,6 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Right: Auth + Businesses */}
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
@@ -192,42 +225,64 @@ export default function Navbar() {
                       {initials}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="hidden text-sm md:inline">{user.name}</span>
+                  <span className="hidden max-w-[140px] truncate text-sm md:inline">
+                    {displayName}
+                  </span>
                   <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+
+              <DropdownMenuContent align="end" className="w-52">
                 <DropdownMenuLabel className="text-xs font-normal text-foreground">
                   Signed in as{" "}
                   <span className="font-medium text-foreground">
                     {user.role}
                   </span>
                 </DropdownMenuLabel>
+
                 <DropdownMenuSeparator />
+
                 {user.role === "regular" && (
-                  <div>
+                  <>
                     <DropdownMenuItem onClick={() => navigate("/profile")}>
                       My Profile
                     </DropdownMenuItem>
-
                     <DropdownMenuItem onClick={() => navigate("/resume")}>
                       Upload Resume
                     </DropdownMenuItem>
-                  </div>
+                    <DropdownMenuItem onClick={() => navigate("/notifications")}>
+                      Notifications
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/negotiation")}>
+                      Negotiation
+                    </DropdownMenuItem>
+                  </>
                 )}
+
                 {user.role === "business" && (
-                  <DropdownMenuItem
-                    onClick={() => navigate("/profile/business")}
-                  >
-                    Business Profile
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => navigate("/profile/business")}
+                    >
+                      Business Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/notifications")}>
+                      Notifications
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/negotiation")}>
+                      Negotiation
+                    </DropdownMenuItem>
+                  </>
                 )}
+
                 {user.role === "admin" && (
                   <DropdownMenuItem onClick={() => navigate("/profile/admin")}>
                     Admin Profile
                   </DropdownMenuItem>
                 )}
+
                 <DropdownMenuSeparator />
+
                 <DropdownMenuItem
                   onClick={handleLogout}
                   className="text-destructive"

@@ -14,7 +14,6 @@ import {
 import { JobCard } from "@/components/jobs/job-card"
 import { JobFormDialog } from "@/components/jobs/job-form-dialog"
 import { JobCandidatesDialog } from "@/components/jobs/job-candidates-dialog"
-import { formatDateTime, formatSalaryRange } from "@/components/jobs/job-utils"
 
 const REGULAR_SORT_OPTIONS = [
   { value: "start_time", label: "Start time" },
@@ -479,49 +478,6 @@ function FiltersCard({
   return null
 }
 
-function NegotiationCard({ negotiation, busy, onDecision }) {
-  if (!negotiation) return null
-
-  const candidateName = negotiation?.user
-    ? `${negotiation.user.first_name} ${negotiation.user.last_name}`
-    : "Candidate"
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Active Negotiation</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        <div className="grid gap-2 md:grid-cols-2">
-          <div>
-            <div className="font-medium">{negotiation.job?.position_type?.name || `Job #${negotiation.job?.id}`}</div>
-            <div className="text-muted-foreground">Candidate: {candidateName}</div>
-            <div className="text-muted-foreground">Pay: {formatSalaryRange(negotiation.job)}</div>
-          </div>
-          <div className="space-y-1 text-muted-foreground">
-            <div>Expires: {formatDateTime(negotiation.expiresAt)}</div>
-            <div>Candidate decision: {negotiation.decisions?.candidate || "pending"}</div>
-            <div>Business decision: {negotiation.decisions?.business || "pending"}</div>
-          </div>
-        </div>
-
-        <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-          Editing the posting during negotiation may reset acceptance state on the backend.
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <Button disabled={busy} onClick={() => onDecision?.("accept")}>
-            Accept
-          </Button>
-          <Button variant="outline" disabled={busy} onClick={() => onDecision?.("decline")}>
-            Decline
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
 export function JobsPage({ role, mode, startCreateOpen = false }) {
   const [items, setItems] = useState([])
   const [count, setCount] = useState(0)
@@ -537,29 +493,8 @@ export function JobsPage({ role, mode, startCreateOpen = false }) {
   const [editingJob, setEditingJob] = useState(null)
   const [candidateJob, setCandidateJob] = useState(null)
   const [isSavingJob, setIsSavingJob] = useState(false)
-  const [activeNegotiation, setActiveNegotiation] = useState(null)
-  const [isNegotiationBusy, setIsNegotiationBusy] = useState(false)
 
   const config = useMemo(() => getConfig(role, mode), [role, mode])
-
-  const loadActiveNegotiation = async () => {
-    if (role !== "business" || mode !== "postings") {
-      setActiveNegotiation(null)
-      return
-    }
-
-    try {
-      const data = await apiClient.getNegotiationsMe()
-      setActiveNegotiation(data)
-    } catch (loadError) {
-      const message = loadError?.message || ""
-      if (/no active negotiation/i.test(message)) {
-        setActiveNegotiation(null)
-        return
-      }
-      setActiveNegotiation(null)
-    }
-  }
 
   const load = async (targetPage = page, nextFilters = filters, nextLimit = limit) => {
     setIsLoading(true)
@@ -586,8 +521,6 @@ export function JobsPage({ role, mode, startCreateOpen = false }) {
       setItems(nextItems)
       setCount(data?.count || 0)
       setPage(targetPage)
-
-      await loadActiveNegotiation()
     } catch (loadError) {
       setError(loadError.message || "Unable to load jobs.")
     } finally {
@@ -682,20 +615,6 @@ export function JobsPage({ role, mode, startCreateOpen = false }) {
     )
   }
 
-  const handleReportNoShow = (job) => {
-    const ok = window.confirm(
-      `Report ${job?.worker?.first_name || "the worker"} as a no-show for job #${job.id}?`
-    )
-    if (!ok) return
-
-    return actOnJob(job.id, () =>
-      apiClient.patchJobsJobIdNoShow({
-        pathParams: { jobId: job.id },
-        body: {},
-      })
-    )
-  }
-
   const handleCreateJob = async (payload) => {
     setIsSavingJob(true)
     try {
@@ -718,27 +637,6 @@ export function JobsPage({ role, mode, startCreateOpen = false }) {
       await load(page)
     } finally {
       setIsSavingJob(false)
-    }
-  }
-
-  const handleNegotiationDecision = async (decision) => {
-    if (!activeNegotiation?.id) return
-
-    setIsNegotiationBusy(true)
-    setError("")
-
-    try {
-      await apiClient.patchNegotiationsMeDecision({
-        body: {
-          negotiation_id: activeNegotiation.id,
-          decision,
-        },
-      })
-      await load(page)
-    } catch (actionError) {
-      setError(actionError.message || "Unable to update negotiation.")
-    } finally {
-      setIsNegotiationBusy(false)
     }
   }
 
@@ -803,14 +701,6 @@ export function JobsPage({ role, mode, startCreateOpen = false }) {
         </div>
       </div>
 
-      {role === "business" && mode === "postings" ? (
-        <NegotiationCard
-          negotiation={activeNegotiation}
-          busy={isNegotiationBusy}
-          onDecision={handleNegotiationDecision}
-        />
-      ) : null}
-
       {config.supportsFilters ? (
         <FiltersCard
           role={role}
@@ -870,7 +760,6 @@ export function JobsPage({ role, mode, startCreateOpen = false }) {
               onEdit={(selectedJob) => setEditingJob(selectedJob)}
               onDelete={handleDelete}
               onManageCandidates={(selectedJob) => setCandidateJob(selectedJob)}
-              onReportNoShow={handleReportNoShow}
             />
           )
         })}

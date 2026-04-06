@@ -1,14 +1,10 @@
 /*
  * Seed data for local development.
  *
- * Goals:
- * - provide one activated regular user that can browse jobs immediately
- * - provide multiple activated + verified businesses
- * - provide approved qualifications for the regular user
- * - provide open jobs from multiple businesses that match those qualifications
- * - provide extra regular users and interests so the business job workflow pages
- *   have candidate search, expressed-interest, filled-job, no-show, and active
- *   negotiation states to test against.
+ * Negotiation testing scenarios included:
+ * 1. Active negotiation: user1 <-> user4
+ * 2. Active negotiation: user6 <-> user5
+ * 3. Mutual interest only (no negotiation yet): user7 <-> user3
  */
 "use strict";
 
@@ -89,7 +85,6 @@ async function main() {
   const now = new Date();
   const expiryDate = addDays(now, 1, 23);
 
-  // Reset non-user data so repeated seeds stay predictable.
   await prisma.negotiation.deleteMany();
   await prisma.interest.deleteMany();
   await prisma.jobPosting.deleteMany();
@@ -126,7 +121,7 @@ async function main() {
     last_name: "Kim",
     phone_number: "416-555-0107",
     postal_address: "300 King St W, Toronto, ON",
-    biography: "Candidate seeded with expressed interest on an open business job.",
+    biography: "Candidate seeded for mutual-interest negotiation start testing.",
     resetToken: "de90849c-9ab7-494e-a022-8c0d9dae0ef9",
     expiresAt: expiryDate,
     lastActive: now,
@@ -330,6 +325,12 @@ async function main() {
         note: "Discoverable candidate qualification",
       },
       {
+        userId: discoverableCandidate.id,
+        positionTypeId: dockSupport.id,
+        status: "approved",
+        note: "Discoverable candidate qualification",
+      },
+      {
         userId: interestedCandidate.id,
         positionTypeId: generalLabour.id,
         status: "approved",
@@ -401,7 +402,6 @@ async function main() {
       })
     : null;
 
-  // Fallback for older Prisma/SQLite combos that do not support createManyAndReturn.
   if (!openJobs) {
     await prisma.jobPosting.createMany({
       data: [
@@ -477,8 +477,15 @@ async function main() {
     },
   });
 
-  // Seed committed jobs so the /my/jobs route has meaningful data to display,
-  // and business pages can show filled/completed/canceled states.
+  const businessThreeOpenDock = await prisma.jobPosting.findFirst({
+    where: {
+      businessId: businessThree.id,
+      positionTypeId: dockSupport.id,
+      status: "open",
+      note: "Receiving and dock assistance",
+    },
+  });
+
   await prisma.jobPosting.createMany({
     data: [
       {
@@ -528,7 +535,8 @@ async function main() {
     ],
   });
 
-  const negotiationJob = await prisma.jobPosting.create({
+  // Active negotiation A: user1 <-> businessTwo (user4)
+  const negotiationJobA = await prisma.jobPosting.create({
     data: {
       businessId: businessTwo.id,
       positionTypeId: warehouseAssociate.id,
@@ -536,15 +544,15 @@ async function main() {
       salaryMax: 30,
       startTime: addDays(now, 2, 12),
       endTime: addDays(now, 2, 20),
-      note: "Active negotiation seed job",
+      note: "Active negotiation seed job A",
       status: "open",
     },
   });
 
-  const mutualInterest = await prisma.interest.create({
+  const mutualInterestA = await prisma.interest.create({
     data: {
       userId: regularUser.id,
-      jobId: negotiationJob.id,
+      jobId: negotiationJobA.id,
       candidateInterested: true,
       businessInterested: true,
     },
@@ -552,9 +560,9 @@ async function main() {
 
   await prisma.negotiation.create({
     data: {
-      jobId: negotiationJob.id,
+      jobId: negotiationJobA.id,
       userId: regularUser.id,
-      interestId: mutualInterest.id,
+      interestId: mutualInterestA.id,
       status: "active",
       expiresAt: addHours(now, 6),
       candidateDecision: null,
@@ -562,22 +570,58 @@ async function main() {
     },
   });
 
-  // Seed interests/candidates for the business-side open job workflow.
+  // Active negotiation B: user6 <-> businessThree (user5)
+  const negotiationJobB = await prisma.jobPosting.create({
+    data: {
+      businessId: businessThree.id,
+      positionTypeId: dockSupport.id,
+      salaryMin: 27,
+      salaryMax: 31,
+      startTime: addDays(now, 3, 11),
+      endTime: addDays(now, 3, 19),
+      note: "Active negotiation seed job B",
+      status: "open",
+    },
+  });
+
+  const mutualInterestB = await prisma.interest.create({
+    data: {
+      userId: discoverableCandidate.id,
+      jobId: negotiationJobB.id,
+      candidateInterested: true,
+      businessInterested: true,
+    },
+  });
+
+  await prisma.negotiation.create({
+    data: {
+      jobId: negotiationJobB.id,
+      userId: discoverableCandidate.id,
+      interestId: mutualInterestB.id,
+      status: "active",
+      expiresAt: addHours(now, 5),
+      candidateDecision: null,
+      businessDecision: null,
+    },
+  });
+
+  // Mutual interest only, no negotiation yet: user7 <-> businessOne (user3)
   if (businessOneOpenGeneral) {
     await prisma.interest.create({
       data: {
         userId: interestedCandidate.id,
         jobId: businessOneOpenGeneral.id,
         candidateInterested: true,
-        businessInterested: false,
+        businessInterested: true,
       },
     });
   }
 
+  // One-sided business interest for business candidate workflow.
   if (businessTwoOpenWarehouse) {
     await prisma.interest.create({
       data: {
-        userId: discoverableCandidate.id,
+        userId: interestedCandidate.id,
         jobId: businessTwoOpenWarehouse.id,
         candidateInterested: false,
         businessInterested: true,
@@ -585,19 +629,37 @@ async function main() {
     });
   }
 
+  // One-sided candidate interest for another open job.
+  if (businessThreeOpenDock) {
+    await prisma.interest.create({
+      data: {
+        userId: regularUser.id,
+        jobId: businessThreeOpenDock.id,
+        candidateInterested: true,
+        businessInterested: false,
+      },
+    });
+  }
+
   console.log("Seed complete.");
-  console.log("Regular user: user1@example.com / testTEST1234!");
-  console.log("Extra regular users: user6@example.com, user7@example.com / testTEST1234!");
+  console.log("Active negotiation A:");
+  console.log("  regular  user1@example.com / testTEST1234!");
+  console.log("  business user4@example.com / testTEST1234!");
+  console.log("Active negotiation B:");
+  console.log("  regular  user6@example.com / testTEST1234!");
+  console.log("  business user5@example.com / testTEST1234!");
+  console.log("Mutual interest only, ready to start negotiation:");
+  console.log("  regular  user7@example.com / testTEST1234!");
+  console.log("  business user3@example.com / testTEST1234!");
   console.log("Admin: user2@example.com / testTEST1234!");
-  console.log("Businesses: user3@example.com, user4@example.com, user5@example.com / testTEST1234!");
 }
 
 main()
   .then(async () => {
-    await prisma.$disconnect();
+    await prisma.$disconnect()
   })
   .catch(async (e) => {
-    console.error(e);
-    await prisma.$disconnect();
-    process.exit(1);
-  });
+    console.error(e)
+    await prisma.$disconnect()
+    process.exit(1)
+  })

@@ -68,6 +68,12 @@ export default function Navbar() {
           {user?.role === "regular" && (
             <>
               <Link
+                to="/"
+                className="transition-colors hover:text-foreground"
+              >
+                Dashboard
+              </Link>
+              <Link
                 to="/jobs"
                 className="transition-colors hover:text-foreground"
               >

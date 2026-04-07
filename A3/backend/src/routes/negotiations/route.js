@@ -98,7 +98,27 @@ const POST = async (req, res) => {
     });
 
     if (existingNegotiation && existingNegotiation.status === "active") {
-      return res.status(200).json(formatNegotiation(existingNegotiation));
+      if (existingNegotiation.expiresAt > now) {
+        return res.status(200).json(formatNegotiation(existingNegotiation));
+      }
+
+      await prisma.$transaction([
+        prisma.negotiation.update({
+          where: { id: existingNegotiation.id },
+          data: { status: "failed" },
+        }),
+        prisma.interest.update({
+          where: { id: interest_id },
+          data: { candidateInterested: null, businessInterested: null },
+        }),
+        prisma.user.update({
+          where: { id: interest.userId },
+          data: { available: true, lastActive: now },
+        }),
+      ]);
+
+      interest.candidateInterested = null;
+      interest.businessInterested = null;
     }
 
     if (!interest.candidateInterested || !interest.businessInterested) {
@@ -139,10 +159,18 @@ const POST = async (req, res) => {
     const [candidateActiveNegotiation, businessActiveNegotiation] =
       await Promise.all([
         prisma.negotiation.findFirst({
-          where: { userId: interest.userId, status: "active" },
+          where: {
+            userId: interest.userId,
+            status: "active",
+            expiresAt: { gt: now },
+          },
         }),
         prisma.negotiation.findFirst({
-          where: { jobId: interest.jobId, status: "active" },
+          where: {
+            jobId: interest.jobId,
+            status: "active",
+            expiresAt: { gt: now },
+          },
         }),
       ]);
 

@@ -4,13 +4,13 @@ CREATE TABLE "User" (
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
-    "resetToken" TEXT,
-    "expiresAt" DATETIME,
+    "resetToken" TEXT NOT NULL,
+    "expiresAt" DATETIME NOT NULL,
     "role" TEXT NOT NULL DEFAULT 'regular',
     "activated" BOOLEAN NOT NULL DEFAULT false,
     "suspended" BOOLEAN NOT NULL DEFAULT false,
     "verified" BOOLEAN NOT NULL DEFAULT false,
-    "isAvailable" BOOLEAN NOT NULL DEFAULT false,
+    "available" BOOLEAN NOT NULL DEFAULT false,
     "lastActive" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "first_name" TEXT,
     "last_name" TEXT,
@@ -31,7 +31,7 @@ CREATE TABLE "PositionType" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "name" TEXT NOT NULL,
     "description" TEXT NOT NULL,
-    "isHidden" BOOLEAN NOT NULL DEFAULT true
+    "hidden" BOOLEAN NOT NULL DEFAULT true
 );
 
 -- CreateTable
@@ -104,9 +104,6 @@ CREATE TABLE "SystemSetting" (
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
-
--- CreateIndex
-CREATE UNIQUE INDEX "PositionType_name_key" ON "PositionType"("name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Qualification_userId_positionTypeId_key" ON "Qualification"("userId", "positionTypeId");

@@ -12,6 +12,7 @@ const GET = async (req, res) => {
     const negotiation = await prisma.negotiation.findFirst({
       where: {
         status: "active",
+        expiresAt: { gt: now },
         ...(role === "regular"
           ? { userId: req.auth.id }
           : { job: { businessId: req.auth.id } }),
@@ -27,7 +28,7 @@ const GET = async (req, res) => {
       },
     });
 
-    if (!negotiation || now >= negotiation.expiresAt) {
+    if (!negotiation) {
       return res.status(404).json({ error: "No active negotiation found." });
     }
 

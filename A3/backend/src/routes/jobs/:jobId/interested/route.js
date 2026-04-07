@@ -84,11 +84,15 @@ const PATCH = async (req, res) => {
       });
     }
 
-    // Reset inactivity timer
-    await prisma.user.update({
-      where: { id: req.auth.id },
-      data: { lastActive: now },
-    });
+    if (interested) {
+      await prisma.user.update({
+        where: { id: req.auth.id },
+        data: {
+          available: true,
+          lastActive: now,
+        },
+      });
+    }
 
     return res.status(200).json({
       id: interest.id,

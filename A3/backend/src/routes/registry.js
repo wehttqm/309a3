@@ -62,6 +62,7 @@ const routeDefinitions = [
   ),
   defineRoute("/users", "GET", "strictAuth", "checkRoleAdmin", "updateLastActive"),
   defineRoute("/users/me", "GET", "strictAuth", "checkRoleRegular"),
+  defineRoute("/users/me/dashboard", "GET", "strictAuth", "checkRoleRegular"),
   defineRoute(
     "/users/me/avatar",
     "PUT",

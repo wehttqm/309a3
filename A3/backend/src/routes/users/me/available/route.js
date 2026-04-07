@@ -1,31 +1,56 @@
 const { prisma } = require("../../../../utils/prisma_client.js");
+const { deriveAvailabilityState } = require("../../../../utils/availability.js");
+
+function normalizeAvailable(value) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "true") return true;
+    if (normalized === "false") return false;
+  }
+  return undefined;
+}
 
 const PATCH = async (req, res) => {
   try {
-    const { available } = req.body;
+    const available = normalizeAvailable(req.body?.available);
 
-    if (available === undefined || typeof available !== "boolean") {
+    if (available === undefined) {
       return res.status(400).json({ error: "available must be a boolean." });
     }
 
+    const authUserId = Number(req.auth?.id);
+    if (!Number.isInteger(authUserId) || authUserId <= 0) {
+      return res.status(401).json({ error: "Unauthorized." });
+    }
+
     const user = await prisma.user.findUnique({
-      where: { id: req.auth.id },
-      include: {
-        qualifications: {
-          where: { status: "approved" },
-        },
+      where: { id: authUserId },
+      select: {
+        id: true,
+        suspended: true,
       },
     });
 
-    if (!user) return res.status(404).json({ error: "User not found." });
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
 
-    if (available === true) {
+    const approvedQualificationCount = await prisma.qualification.count({
+      where: {
+        userId: authUserId,
+        status: "approved",
+      },
+    });
+
+    if (available) {
       if (user.suspended) {
         return res.status(400).json({
           error: "Suspended users cannot set themselves as available.",
         });
       }
-      if (user.qualifications.length === 0) {
+
+      if (approvedQualificationCount === 0) {
         return res.status(400).json({
           error:
             "You must have at least one approved qualification to set yourself as available.",
@@ -33,12 +58,36 @@ const PATCH = async (req, res) => {
       }
     }
 
-    await prisma.user.update({
-      where: { id: req.auth.id },
-      data: { available },
+    const now = new Date();
+
+    const updatedUser = await prisma.user.update({
+      where: { id: authUserId },
+      data: {
+        available,
+        lastActive: available ? now : undefined,
+      },
+      select: {
+        available: true,
+        lastActive: true,
+        suspended: true,
+      },
     });
 
-    return res.status(200).json({ available });
+    const { effectiveAvailable, availabilityState, message } =
+      deriveAvailabilityState({
+        user: updatedUser,
+        now,
+        availabilityTimeoutMs: 0,
+        approvedQualifications: approvedQualificationCount,
+      });
+
+    return res.status(200).json({
+      available: effectiveAvailable,
+      raw_available: updatedUser.available,
+      availability_state: availabilityState,
+      lastActive: updatedUser.lastActive,
+      message,
+    });
   } catch (error) {
     console.error("PATCH /users/me/available error:", error);
     return res.status(500).json({ error: "Internal server error." });

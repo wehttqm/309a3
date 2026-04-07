@@ -7,9 +7,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { BusinessDashboard } from "@/components/dashboard/business-dashboard"
 import { RegularDashboard } from "@/components/dashboard/regular-dashboard"
 import { useAuth } from "@/context/auth-context"
-import { ArrowUpRight, Briefcase, Building2, ChevronDown } from "lucide-react"
+import { ArrowUpRight, ChevronDown } from "lucide-react"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 
@@ -90,54 +91,7 @@ export const Landing = () => {
   }
 
   if (user?.role === "business") {
-    return (
-      <div className="min-h-screen bg-background text-foreground">
-        <section className="mx-auto max-w-5xl px-6 py-16">
-          <Badge variant="secondary" className="mb-4">
-            Business Dashboard
-          </Badge>
-
-          <h1 className="mb-3 text-4xl font-bold tracking-tight">
-            Welcome back{user.name ? `, ${user.name}` : ""}
-          </h1>
-
-          <p className="mb-8 max-w-2xl text-lg text-muted-foreground">
-            Manage your business account and prepare your staffing workflow from
-            your business workspace.
-          </p>
-
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <Card className="flex flex-col">
-              <CardHeader>
-                <Building2 className="mb-2 h-8 w-8 text-primary" />
-                <CardTitle>Business Profile</CardTitle>
-                <CardDescription>
-                  Review your business details and keep your organization
-                  profile current.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="mt-auto">
-                <Button className="w-full" onClick={() => navigate("/profile")}>
-                  Go to Business Profile <ArrowUpRight className="ml-2 h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <Briefcase className="mb-2 h-8 w-8 text-primary" />
-                <CardTitle>What you can do next</CardTitle>
-                <CardDescription>
-                  Once business routes are mounted, this homepage can also
-                  surface job postings, candidate discovery, and negotiation
-                  activity.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </section>
-      </div>
-    )
+    return <BusinessDashboard />
   }
 
   if (user?.role === "admin") {

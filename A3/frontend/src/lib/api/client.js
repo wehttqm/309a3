@@ -186,4 +186,5 @@ export const availabilityApi = {
 
 export const dashboardApi = {
   getRegularDashboard: () => requestJson("/users/me/dashboard"),
+  getBusinessDashboard: () => requestJson("/businesses/me/dashboard"),
 }

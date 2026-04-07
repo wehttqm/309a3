@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Link } from "react-router-dom"
 import { toast } from "sonner"
+import { Link } from "react-router-dom"
 import {
   ArrowRight,
-  BadgeCheck,
   Building2,
+  ClipboardCheck,
+  Eye,
   Settings2,
-  ShieldAlert,
   ShieldCheck,
-  Wrench,
+  UserRoundX,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -20,8 +20,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { useAuth } from "@/context/auth-context"
 import { adminApi } from "@/lib/api/client"
+
+function formatDateLabel(value) {
+  if (!value) return "Recently"
+
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(new Date(value))
+  } catch {
+    return value
+  }
+}
 
 function CountBadge({ count }) {
   return <Badge variant="secondary">{count}</Badge>
@@ -36,31 +50,16 @@ function MetricPill({ label, value }) {
   )
 }
 
-function formatDateTime(value) {
-  if (!value) return "—"
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return "—"
-  return date.toLocaleString()
-}
-
-function getAdminName(user) {
-  if (user?.name) return user.name
-  if (user?.email) return user.email.split("@")[0]
-  return "Admin"
-}
-
-function QueueShell({
+function QueueCard({
   icon: Icon,
   title,
   description,
   count,
   actionTo,
   actionLabel,
-  emptyMessage,
+  emptyText,
   children,
 }) {
-  const hasItems = count > 0
-
   return (
     <Card>
       <CardHeader className="space-y-3 pb-4">
@@ -73,14 +72,18 @@ function QueueShell({
         </div>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
+
       <CardContent className="flex h-full flex-col gap-4 pt-0">
         <div className="flex-1 space-y-3">
-          {hasItems ? children : (
+          {count > 0 ? (
+            children
+          ) : (
             <div className="rounded-2xl border border-dashed px-4 py-6 text-sm text-muted-foreground">
-              {emptyMessage}
+              {emptyText}
             </div>
           )}
         </div>
+
         <Button asChild variant="outline" className="w-full">
           <Link to={actionTo}>
             {actionLabel}
@@ -93,7 +96,6 @@ function QueueShell({
 }
 
 export function AdminDashboard() {
-  const { user } = useAuth()
   const [dashboard, setDashboard] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
@@ -105,10 +107,10 @@ export function AdminDashboard() {
 
     try {
       const [
-        pendingBusinesses,
-        pendingQualifications,
+        businesses,
+        qualifications,
         suspendedUsers,
-        hiddenPositionTypes,
+        hiddenPositions,
         resetCooldown,
         negotiationWindow,
         jobStartWindow,
@@ -117,7 +119,7 @@ export function AdminDashboard() {
         adminApi.getBusinesses({ verified: false, page: 1, limit: 5, sort: "business_name", order: "asc" }),
         adminApi.getQualifications({ page: 1, limit: 5 }),
         adminApi.getRegularUsers({ suspended: true, page: 1, limit: 5 }),
-        adminApi.getPositionTypes({ hidden: "true", name: "asc", num_qualified: "asc", page: 1, limit: 5 }),
+        adminApi.getPositionTypes({ hidden: true, page: 1, limit: 5, name: "asc" }),
         adminApi.getResetCooldown(),
         adminApi.getNegotiationWindow(),
         adminApi.getJobStartWindow(),
@@ -125,15 +127,15 @@ export function AdminDashboard() {
       ])
 
       setDashboard({
-        pendingBusinesses,
-        pendingQualifications,
+        businesses,
+        qualifications,
         suspendedUsers,
-        hiddenPositionTypes,
+        hiddenPositions,
         settings: {
-          reset_cooldown: resetCooldown?.reset_cooldown ?? null,
-          negotiation_window: negotiationWindow?.negotiation_window ?? null,
-          job_start_window: jobStartWindow?.job_start_window ?? null,
-          availability_timeout: availabilityTimeout?.availability_timeout ?? null,
+          reset_cooldown: resetCooldown?.reset_cooldown,
+          negotiation_window: negotiationWindow?.negotiation_window,
+          job_start_window: jobStartWindow?.job_start_window,
+          availability_timeout: availabilityTimeout?.availability_timeout,
         },
       })
     } catch (err) {
@@ -147,8 +149,25 @@ export function AdminDashboard() {
     loadDashboard()
   }, [loadDashboard])
 
+  const queueCounts = useMemo(() => {
+    return {
+      businesses: dashboard?.businesses?.count || 0,
+      qualifications: dashboard?.qualifications?.count || 0,
+      suspendedUsers: dashboard?.suspendedUsers?.count || 0,
+      hiddenPositions: dashboard?.hiddenPositions?.count || 0,
+    }
+  }, [dashboard])
+
+  const totalTodos =
+    queueCounts.businesses +
+    queueCounts.qualifications +
+    queueCounts.suspendedUsers +
+    queueCounts.hiddenPositions
+
   const handleVerifyBusiness = async (businessId) => {
-    setPendingAction(`business-${businessId}`)
+    const key = `verify-${businessId}`
+    setPendingAction(key)
+
     try {
       await adminApi.setBusinessVerified(businessId, true)
       toast.success("Business verified.")
@@ -161,50 +180,49 @@ export function AdminDashboard() {
   }
 
   const handleQualificationDecision = async (qualificationId, status) => {
-    setPendingAction(`qualification-${qualificationId}-${status}`)
+    const key = `${status}-${qualificationId}`
+    setPendingAction(key)
+
     try {
       await adminApi.updateQualification(qualificationId, { status })
       toast.success(`Qualification ${status}.`)
       await loadDashboard()
     } catch (err) {
-      toast.error(err.message || "Failed to update qualification.")
+      toast.error(err.message || `Failed to mark qualification as ${status}.`)
     } finally {
       setPendingAction("")
     }
   }
 
   const handleUnsuspendUser = async (userId) => {
-    setPendingAction(`user-${userId}`)
+    const key = `unsuspend-${userId}`
+    setPendingAction(key)
+
     try {
       await adminApi.setUserSuspended(userId, false)
       toast.success("User unsuspended.")
       await loadDashboard()
     } catch (err) {
-      toast.error(err.message || "Failed to update user.")
+      toast.error(err.message || "Failed to unsuspend user.")
     } finally {
       setPendingAction("")
     }
   }
 
-  const handleRevealPosition = async (positionTypeId) => {
-    setPendingAction(`position-${positionTypeId}`)
+  const handleMakePositionVisible = async (positionTypeId) => {
+    const key = `visible-${positionTypeId}`
+    setPendingAction(key)
+
     try {
       await adminApi.updatePositionType(positionTypeId, { hidden: false })
       toast.success("Position type is now visible.")
       await loadDashboard()
     } catch (err) {
-      toast.error(err.message || "Failed to update position type.")
+      toast.error(err.message || "Failed to update position type visibility.")
     } finally {
       setPendingAction("")
     }
   }
-
-  const stats = useMemo(() => ({
-    pendingBusinesses: dashboard?.pendingBusinesses?.count || 0,
-    qualificationQueue: dashboard?.pendingQualifications?.count || 0,
-    suspendedUsers: dashboard?.suspendedUsers?.count || 0,
-    hiddenPositions: dashboard?.hiddenPositionTypes?.count || 0,
-  }), [dashboard])
 
   if (isLoading) {
     return (
@@ -224,250 +242,266 @@ export function AdminDashboard() {
     )
   }
 
-  const greetingName = getAdminName(user)
-  let pageSummary = "Here is the quickest path through the main review queues and system controls."
+  const businesses = dashboard?.businesses?.results || []
+  const qualifications = dashboard?.qualifications?.results || []
+  const suspendedUsers = dashboard?.suspendedUsers?.results || []
+  const hiddenPositions = dashboard?.hiddenPositions?.results || []
+  const settings = dashboard?.settings || {}
 
-  if (stats.pendingBusinesses > 0) {
-    pageSummary = `${stats.pendingBusinesses} business${stats.pendingBusinesses === 1 ? "" : "es"} are waiting for verification.`
-  } else if (stats.qualificationQueue > 0) {
-    pageSummary = `${stats.qualificationQueue} qualification${stats.qualificationQueue === 1 ? "" : "s"} need review.`
-  } else if (stats.suspendedUsers > 0) {
-    pageSummary = `${stats.suspendedUsers} suspended user${stats.suspendedUsers === 1 ? "" : "s"} can be reviewed here.`
+  let pageSummary = "Work through the queues below to keep matching, onboarding, and platform visibility moving."
+
+  if (queueCounts.qualifications > 0) {
+    pageSummary = "Qualification review is your most time-sensitive queue because it unlocks matching for workers."
+  } else if (queueCounts.businesses > 0) {
+    pageSummary = "Businesses are waiting for verification before they can fully participate in hiring workflows."
+  } else if (totalTodos === 0) {
+    pageSummary = "You are caught up on the main admin queues. This is a good moment to review visibility settings and system timing controls."
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-10">
-      <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
-        <Card className="border-primary/10 bg-gradient-to-br from-background via-background to-primary/5">
-          <CardContent className="p-5 sm:p-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge>Administrator</Badge>
-                  {(stats.pendingBusinesses + stats.qualificationQueue + stats.suspendedUsers) > 0 ? (
-                    <Badge variant="secondary">Action queue active</Badge>
-                  ) : (
-                    <Badge variant="outline">No urgent queue</Badge>
-                  )}
-                </div>
-                <h1 className="mt-3 text-3xl font-semibold tracking-tight">Welcome back, {greetingName}</h1>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{pageSummary}</p>
-              </div>
-              <Button asChild>
-                <Link to="/admin/businesses">Open admin tools</Link>
-              </Button>
-            </div>
-
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <MetricPill label="Awaiting verification" value={stats.pendingBusinesses} />
-              <MetricPill label="Qualification queue" value={stats.qualificationQueue} />
-              <MetricPill label="Suspended users" value={stats.suspendedUsers} />
-              <MetricPill label="Hidden positions" value={stats.hiddenPositions} />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <Settings2 className="h-5 w-5 text-primary" />
-              <CardTitle className="text-base">System controls</CardTitle>
-            </div>
-            <CardDescription>
-              Snapshot of admin-managed timing values.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="flex items-center justify-between rounded-2xl border px-4 py-3">
-              <span className="text-muted-foreground">Reset cooldown</span>
-              <Badge variant="secondary">{dashboard?.settings?.reset_cooldown ?? "—"}s</Badge>
-            </div>
-            <div className="flex items-center justify-between rounded-2xl border px-4 py-3">
-              <span className="text-muted-foreground">Negotiation window</span>
-              <Badge variant="secondary">{dashboard?.settings?.negotiation_window ?? "—"}s</Badge>
-            </div>
-            <div className="flex items-center justify-between rounded-2xl border px-4 py-3">
-              <span className="text-muted-foreground">Job start window</span>
-              <Badge variant="secondary">{dashboard?.settings?.job_start_window ?? "—"}h</Badge>
-            </div>
-            <div className="flex items-center justify-between rounded-2xl border px-4 py-3">
-              <span className="text-muted-foreground">Availability timeout</span>
-              <Badge variant="secondary">{dashboard?.settings?.availability_timeout ?? "—"}s</Badge>
-            </div>
-            <Button asChild variant="outline" className="w-full">
-              <Link to="/admin/config">Adjust system settings</Link>
-            </Button>
-          </CardContent>
-        </Card>
+    <div className="mx-auto max-w-7xl px-6 py-10">
+      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <Badge variant="secondary" className="mb-4">Administrator</Badge>
+          <h1 className="text-3xl font-bold tracking-tight">Admin dashboard</h1>
+          <p className="mt-2 max-w-3xl text-muted-foreground">{pageSummary}</p>
+        </div>
+        <Button variant="outline" onClick={loadDashboard}>Refresh queues</Button>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <QueueShell
-          icon={Building2}
-          title="Businesses awaiting verification"
-          description="Verify organizations so they can move faster into job posting and hiring workflows."
-          count={dashboard?.pendingBusinesses?.count || 0}
+      <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <MetricPill label="Open admin to-dos" value={totalTodos} />
+        <MetricPill label="Businesses to verify" value={queueCounts.businesses} />
+        <MetricPill label="Qualifications to review" value={queueCounts.qualifications} />
+        <MetricPill label="Suspended users" value={queueCounts.suspendedUsers} />
+        <MetricPill label="Hidden positions" value={queueCounts.hiddenPositions} />
+      </div>
+
+      {totalTodos === 0 ? (
+        <Card className="mb-6 border-dashed bg-muted/20">
+          <CardHeader>
+            <CardTitle>All caught up</CardTitle>
+            <CardDescription>
+              There are no urgent approval queues right now. You can still review positions, users, or configuration from the cards below.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      ) : null}
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <QueueCard
+          icon={ShieldCheck}
+          title="Verify Businesses"
+          description="Confirm legitimate clinics and complete onboarding for businesses waiting on approval."
+          count={queueCounts.businesses}
           actionTo="/admin/businesses"
-          actionLabel="Manage businesses"
-          emptyMessage="No businesses are currently waiting for verification."
+          actionLabel="Open business queue"
+          emptyText="No businesses are currently waiting for verification."
         >
-          {dashboard?.pendingBusinesses?.results?.map((business) => (
+          {businesses.map((business) => (
             <div key={business.id} className="rounded-2xl border px-4 py-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="font-medium">{business.business_name || "Unnamed business"}</div>
-                  <div className="mt-1 text-sm text-muted-foreground">{business.owner_name || "Unknown owner"}</div>
-                  <div className="mt-1 text-sm text-muted-foreground">{business.email}</div>
+                  <div className="font-medium">{business.business_name}</div>
+                  <div className="mt-1 text-sm text-muted-foreground">{business.owner_name || "No owner listed"}</div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant={business.activated ? "default" : "outline"}>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant={business.activated ? "secondary" : "outline"}>
                     {business.activated ? "Activated" : "Not activated"}
                   </Badge>
-                  <Button
-                    size="sm"
-                    onClick={() => handleVerifyBusiness(business.id)}
-                    disabled={pendingAction === `business-${business.id}`}
-                  >
-                    {pendingAction === `business-${business.id}` ? "Saving..." : "Verify"}
-                  </Button>
+                  <Badge variant="outline">Pending verification</Badge>
                 </div>
+              </div>
+              <div className="mt-2 text-sm text-muted-foreground">{business.email}</div>
+              <div className="mt-1 text-sm text-muted-foreground">{business.phone_number || "No phone listed"}</div>
+              <div className="mt-3 flex gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => handleVerifyBusiness(business.id)}
+                  disabled={pendingAction === `verify-${business.id}`}
+                >
+                  {pendingAction === `verify-${business.id}` ? "Verifying..." : "Verify"}
+                </Button>
               </div>
             </div>
           ))}
-        </QueueShell>
+        </QueueCard>
 
-        <QueueShell
-          icon={BadgeCheck}
-          title="Qualification review"
-          description="Approve or reject the requests that need administrator attention."
-          count={dashboard?.pendingQualifications?.count || 0}
+        <QueueCard
+          icon={ClipboardCheck}
+          title="Review Qualifications"
+          description="Approve or reject worker qualifications so eligible users can start matching for jobs."
+          count={queueCounts.qualifications}
           actionTo="/admin/qualifications"
           actionLabel="Open qualification queue"
-          emptyMessage="No qualification requests require admin attention right now."
+          emptyText="No qualifications are currently waiting for admin attention."
         >
-          {dashboard?.pendingQualifications?.results?.map((qualification) => (
+          {qualifications.map((qualification) => (
             <div key={qualification.id} className="rounded-2xl border px-4 py-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="font-medium">
                     {qualification.user?.first_name} {qualification.user?.last_name}
                   </div>
-                  <div className="mt-1 text-sm text-muted-foreground">{qualification.position_type?.name}</div>
-                  <div className="mt-1 text-xs text-muted-foreground">Updated {formatDateTime(qualification.updatedAt)}</div>
+                  <div className="mt-1 text-sm text-muted-foreground">
+                    {qualification.position_type?.name || "Unknown position type"}
+                  </div>
                 </div>
-                <Badge variant={qualification.status === "revised" ? "secondary" : "default"}>
-                  {qualification.status}
-                </Badge>
+                <Badge variant="secondary">{qualification.status}</Badge>
               </div>
+              <div className="mt-2 text-sm text-muted-foreground">Updated {formatDateLabel(qualification.updatedAt)}</div>
               <div className="mt-3 flex flex-wrap gap-2">
-                <Button asChild variant="outline" size="sm">
-                  <Link to={`/qualifications/${qualification.id}`}>Review</Link>
-                </Button>
                 <Button
+                  type="button"
                   size="sm"
                   onClick={() => handleQualificationDecision(qualification.id, "approved")}
-                  disabled={pendingAction === `qualification-${qualification.id}-approved` || pendingAction === `qualification-${qualification.id}-rejected`}
+                  disabled={pendingAction === `approved-${qualification.id}` || pendingAction === `rejected-${qualification.id}`}
                 >
-                  {pendingAction === `qualification-${qualification.id}-approved` ? "Saving..." : "Approve"}
+                  {pendingAction === `approved-${qualification.id}` ? "Approving..." : "Approve"}
                 </Button>
                 <Button
+                  type="button"
                   size="sm"
-                  variant="destructive"
+                  variant="outline"
                   onClick={() => handleQualificationDecision(qualification.id, "rejected")}
-                  disabled={pendingAction === `qualification-${qualification.id}-approved` || pendingAction === `qualification-${qualification.id}-rejected`}
+                  disabled={pendingAction === `approved-${qualification.id}` || pendingAction === `rejected-${qualification.id}`}
                 >
-                  {pendingAction === `qualification-${qualification.id}-rejected` ? "Saving..." : "Reject"}
+                  {pendingAction === `rejected-${qualification.id}` ? "Rejecting..." : "Reject"}
                 </Button>
               </div>
             </div>
           ))}
-        </QueueShell>
+        </QueueCard>
 
-        <QueueShell
-          icon={ShieldAlert}
-          title="Suspended users"
-          description="Quickly review and unsuspend accounts when appropriate."
-          count={dashboard?.suspendedUsers?.count || 0}
+        <QueueCard
+          icon={UserRoundX}
+          title="Suspended Users"
+          description="Follow up on restricted accounts and restore access when suspension should be lifted."
+          count={queueCounts.suspendedUsers}
           actionTo="/admin/users"
-          actionLabel="Manage users"
-          emptyMessage="There are no suspended users at the moment."
+          actionLabel="Open user management"
+          emptyText="No regular users are currently suspended."
         >
-          {dashboard?.suspendedUsers?.results?.map((regularUser) => (
+          {suspendedUsers.map((regularUser) => (
             <div key={regularUser.id} className="rounded-2xl border px-4 py-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="font-medium">{regularUser.first_name} {regularUser.last_name}</div>
                   <div className="mt-1 text-sm text-muted-foreground">{regularUser.email}</div>
-                  <div className="mt-1 text-sm text-muted-foreground">{regularUser.phone_number || "No phone on file"}</div>
                 </div>
+                <Badge variant="destructive">Suspended</Badge>
+              </div>
+              <div className="mt-2 text-sm text-muted-foreground">{regularUser.phone_number || "No phone listed"}</div>
+              <div className="mt-3 flex gap-2">
                 <Button
+                  type="button"
                   size="sm"
                   variant="outline"
                   onClick={() => handleUnsuspendUser(regularUser.id)}
-                  disabled={pendingAction === `user-${regularUser.id}`}
+                  disabled={pendingAction === `unsuspend-${regularUser.id}`}
                 >
-                  {pendingAction === `user-${regularUser.id}` ? "Saving..." : "Unsuspend"}
+                  {pendingAction === `unsuspend-${regularUser.id}` ? "Updating..." : "Unsuspend"}
                 </Button>
               </div>
             </div>
           ))}
-        </QueueShell>
+        </QueueCard>
 
-        <QueueShell
-          icon={Wrench}
-          title="Hidden position types"
-          description="Publish position types that are ready to appear in worker and business flows."
-          count={dashboard?.hiddenPositionTypes?.count || 0}
+        <QueueCard
+          icon={Eye}
+          title="Hidden Position Types"
+          description="Review hidden roles and make them visible again when admins are ready to support them."
+          count={queueCounts.hiddenPositions}
           actionTo="/admin/positions"
-          actionLabel="Manage position types"
-          emptyMessage="All position types are currently visible."
+          actionLabel="Open position types"
+          emptyText="No position types are currently hidden."
         >
-          {dashboard?.hiddenPositionTypes?.results?.map((positionType) => (
+          {hiddenPositions.map((positionType) => (
             <div key={positionType.id} className="rounded-2xl border px-4 py-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="font-medium">{positionType.name}</div>
                   <div className="mt-1 text-sm text-muted-foreground line-clamp-2">{positionType.description}</div>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <Badge variant="secondary">Qualified {positionType.num_qualified ?? 0}</Badge>
-                    <Badge variant="outline">Hidden</Badge>
-                  </div>
                 </div>
+                <Badge variant="outline">Hidden</Badge>
+              </div>
+              <div className="mt-2 text-sm text-muted-foreground">
+                Qualified users: {positionType.num_qualified ?? 0}
+              </div>
+              <div className="mt-3 flex gap-2">
                 <Button
+                  type="button"
                   size="sm"
                   variant="outline"
-                  onClick={() => handleRevealPosition(positionType.id)}
-                  disabled={pendingAction === `position-${positionType.id}`}
+                  onClick={() => handleMakePositionVisible(positionType.id)}
+                  disabled={pendingAction === `visible-${positionType.id}`}
                 >
-                  {pendingAction === `position-${positionType.id}` ? "Saving..." : "Make visible"}
+                  {pendingAction === `visible-${positionType.id}` ? "Updating..." : "Make visible"}
                 </Button>
               </div>
             </div>
           ))}
-        </QueueShell>
+        </QueueCard>
       </div>
 
-      {(stats.pendingBusinesses + stats.qualificationQueue + stats.suspendedUsers + stats.hiddenPositions) === 0 ? (
-        <Card className="mt-6">
+      <div className="mt-6 grid gap-6 xl:grid-cols-[1.4fr_1fr]">
+        <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <ShieldCheck className="h-5 w-5 text-primary" />
-              <CardTitle>Everything is caught up</CardTitle>
+              <Building2 className="h-5 w-5 text-primary" />
+              <CardTitle className="text-base">Suggested admin priorities</CardTitle>
             </div>
             <CardDescription>
-              There are no pending verification, review, suspension, or hidden-position queues right now.
+              A practical order of operations for keeping the platform moving smoothly.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild variant="outline">
-              <Link to="/admin/businesses">Review businesses</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link to="/admin/qualifications">Review qualifications</Link>
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <div className="rounded-2xl border px-4 py-3">
+              <div className="font-medium text-foreground">1. Clear the qualification queue first</div>
+              <div className="mt-1">
+                Workers cannot fully participate in matching until their qualifications are reviewed and approved.
+              </div>
+            </div>
+            <div className="rounded-2xl border px-4 py-3">
+              <div className="font-medium text-foreground">2. Verify real businesses quickly</div>
+              <div className="mt-1">
+                Verification helps legitimate clinics move from onboarding into live hiring without manual delays.
+              </div>
+            </div>
+            <div className="rounded-2xl border px-4 py-3">
+              <div className="font-medium text-foreground">3. Revisit suspended accounts deliberately</div>
+              <div className="mt-1">
+                Unsuspend only when the operational reason for the restriction has been resolved.
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Settings2 className="h-5 w-5 text-primary" />
+              <CardTitle className="text-base">System settings snapshot</CardTitle>
+            </div>
+            <CardDescription>
+              These timing rules shape how fast resets, negotiations, and matching state changes happen.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <MetricPill label="Reset cooldown" value={`${settings.reset_cooldown ?? "—"} sec`} />
+            <MetricPill label="Negotiation window" value={`${settings.negotiation_window ?? "—"} sec`} />
+            <MetricPill label="Job start window" value={`${settings.job_start_window ?? "—"} hr`} />
+            <MetricPill label="Availability timeout" value={`${settings.availability_timeout ?? "—"} sec`} />
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/admin/config">
+                Open system settings
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
             </Button>
           </CardContent>
         </Card>
-      ) : null}
+      </div>
     </div>
   )
 }

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { adminApi } from "@/lib/api/client"
+import { AdminHelperCard } from "@/components/admin/admin-helper-card"
 
 function SettingCard({
   title,
@@ -155,6 +156,18 @@ export const AdminSystemConfigPage = () => {
           </p>
         </div>
         <Badge variant="secondary">Admin</Badge>
+      </div>
+
+      <div className="mb-6">
+        <AdminHelperCard
+          title="Change these settings carefully"
+          description="These values affect live platform behavior for matching, resets, and negotiations. Small changes can have large workflow effects."
+          bullets={[
+            'Shorter timeouts make the system stricter and can remove users from discovery faster.',
+            'Longer negotiation windows give both sides more time, but they also lock jobs and users for longer.',
+            'Use these controls when you need to tune the platform, not for routine day-to-day review work.',
+          ]}
+        />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">

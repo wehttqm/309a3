@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { AdminDashboard } from "@/components/dashboard/admin-dashboard"
 import { BusinessDashboard } from "@/components/dashboard/business-dashboard"
 import { RegularDashboard } from "@/components/dashboard/regular-dashboard"
 import { useAuth } from "@/context/auth-context"
@@ -95,25 +96,7 @@ export const Landing = () => {
   }
 
   if (user?.role === "admin") {
-    return (
-      <div className="min-h-screen bg-background text-foreground">
-        <section className="mx-auto max-w-5xl px-6 py-16">
-          <Badge variant="secondary" className="mb-4">
-            Administrator
-          </Badge>
-
-          <h1 className="mb-3 text-4xl font-bold tracking-tight">
-            Welcome back{user.name ? `, ${user.name}` : ""}
-          </h1>
-
-          <p className="max-w-2xl text-lg text-muted-foreground">
-            Your admin session is active. Mount your admin routes before adding
-            homepage shortcuts for qualification review, business verification,
-            and system configuration.
-          </p>
-        </section>
-      </div>
-    )
+    return <AdminDashboard />
   }
 
   return (

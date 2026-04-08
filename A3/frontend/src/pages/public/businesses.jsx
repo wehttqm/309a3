@@ -1,20 +1,13 @@
 import { useEffect, useMemo, useState } from "react"
 import { Link } from "react-router-dom"
+import { useAuth } from "@/context/auth-context"
+import { apiClient } from "@/lib/api/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 
-const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL || "http://localhost:3000").replace(/\/$/, "")
-
-function formatDate(value) {
-  if (!value) return "—"
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return "—"
-  return date.toLocaleDateString()
-}
-
-function BusinessListCard({ business }) {
+function BusinessListCard({ business, isAdmin }) {
   return (
     <Card className="h-full">
       <CardHeader>
@@ -27,6 +20,13 @@ function BusinessListCard({ business }) {
         </div>
       </CardHeader>
       <CardContent className="space-y-3 text-sm">
+        {isAdmin ? (
+          <div>
+            <span className="font-medium text-muted-foreground">Owner: </span>
+            <span>{business.owner_name || "—"}</span>
+          </div>
+        ) : null}
+
         <div>
           <span className="font-medium text-muted-foreground">Phone: </span>
           <span>{business.phone_number || "—"}</span>
@@ -35,16 +35,26 @@ function BusinessListCard({ business }) {
           <span className="font-medium text-muted-foreground">Address: </span>
           <span>{business.postal_address || "—"}</span>
         </div>
-        <div>
-          <span className="font-medium text-muted-foreground">Joined: </span>
-          <span>{formatDate(business.createdAt)}</span>
-        </div>
+
+        {isAdmin ? (
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Badge variant={business.activated ? "default" : "outline"}>
+              {business.activated ? "Activated" : "Inactive"}
+            </Badge>
+            <Badge variant={business.verified ? "default" : "secondary"}>
+              {business.verified ? "Verified" : "Pending verification"}
+            </Badge>
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   )
 }
 
 export function Businesses() {
+  const { user } = useAuth()
+  const isAdmin = user?.role === "admin"
+
   const [businesses, setBusinesses] = useState([])
   const [count, setCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
@@ -54,6 +64,8 @@ export function Businesses() {
   const [keyword, setKeyword] = useState("")
   const [sort, setSort] = useState("")
   const [order, setOrder] = useState("asc")
+  const [activated, setActivated] = useState("all")
+  const [verified, setVerified] = useState("all")
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(10)
 
@@ -65,19 +77,18 @@ export function Businesses() {
       setError("")
 
       try {
-        const params = new URLSearchParams()
-        if (keyword.trim()) params.set("keyword", keyword.trim())
-        if (sort) params.set("sort", sort)
-        if (sort) params.set("order", order)
-        params.set("page", String(page))
-        params.set("limit", String(limit))
-
-        const response = await fetch(`${BACKEND_URL}/businesses?${params.toString()}`)
-        const data = await response.json()
-
-        if (!response.ok) {
-          throw new Error(data?.error || data?.message || "Failed to load businesses.")
+        const query = {
+          page,
+          limit,
         }
+
+        if (keyword.trim()) query.keyword = keyword.trim()
+        if (sort) query.sort = sort
+        if (sort) query.order = order
+        if (isAdmin && activated !== "all") query.activated = activated === "true"
+        if (isAdmin && verified !== "all") query.verified = verified === "true"
+
+        const data = await apiClient.getBusinesses({ query })
 
         if (!ignore) {
           setBusinesses(Array.isArray(data.results) ? data.results : [])
@@ -99,7 +110,7 @@ export function Businesses() {
     return () => {
       ignore = true
     }
-  }, [keyword, sort, order, page, limit])
+  }, [activated, isAdmin, keyword, limit, order, page, sort, verified])
 
   const totalPages = useMemo(() => {
     const pages = Math.ceil(count / limit)
@@ -117,6 +128,8 @@ export function Businesses() {
     setKeyword("")
     setSort("")
     setOrder("asc")
+    setActivated("all")
+    setVerified("all")
     setPage(1)
     setLimit(10)
   }
@@ -127,12 +140,16 @@ export function Businesses() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Businesses</h1>
           <p className="mt-2 text-muted-foreground">
-            Browse businesses using the platform. Search by name, email, address, or phone.
+            {isAdmin
+              ? "Browse businesses with admin-only details, including owner name, activation, and verification state."
+              : "Browse businesses using the platform. Search by name, email, address, or phone."}
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link to="/register/business">Register Your Business</Link>
-        </Button>
+        {!isAdmin ? (
+          <Button asChild variant="outline">
+            <Link to="/register/business">Register Your Business</Link>
+          </Button>
+        ) : null}
       </div>
 
       <Card className="mb-6">
@@ -143,7 +160,11 @@ export function Businesses() {
               <Input
                 value={keywordInput}
                 onChange={(e) => setKeywordInput(e.target.value)}
-                placeholder="Business name, email, address, or phone"
+                placeholder={
+                  isAdmin
+                    ? "Business, owner, email, address, or phone"
+                    : "Business name, email, address, or phone"
+                }
               />
             </div>
 
@@ -160,6 +181,7 @@ export function Businesses() {
                 <option value="">Default</option>
                 <option value="business_name">Business Name</option>
                 <option value="email">Email</option>
+                {isAdmin ? <option value="owner_name">Owner Name</option> : null}
               </select>
             </div>
 
@@ -195,7 +217,43 @@ export function Businesses() {
               </select>
             </div>
 
-            <div className="md:col-span-5 flex flex-wrap gap-2">
+            {isAdmin ? (
+              <>
+                <div>
+                  <label className="mb-2 block text-sm font-medium">Activated</label>
+                  <select
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+                    value={activated}
+                    onChange={(e) => {
+                      setActivated(e.target.value)
+                      setPage(1)
+                    }}
+                  >
+                    <option value="all">All</option>
+                    <option value="true">Activated</option>
+                    <option value="false">Not activated</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium">Verified</label>
+                  <select
+                    className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+                    value={verified}
+                    onChange={(e) => {
+                      setVerified(e.target.value)
+                      setPage(1)
+                    }}
+                  >
+                    <option value="all">All</option>
+                    <option value="true">Verified</option>
+                    <option value="false">Not verified</option>
+                  </select>
+                </div>
+              </>
+            ) : null}
+
+            <div className="flex flex-wrap gap-2 md:col-span-5">
               <Button type="submit">Apply</Button>
               <Button type="button" variant="outline" onClick={onReset}>
                 Reset
@@ -227,7 +285,7 @@ export function Businesses() {
       {!error && businesses.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {businesses.map((business) => (
-            <BusinessListCard key={business.id} business={business} />
+            <BusinessListCard key={business.id} business={business} isAdmin={isAdmin} />
           ))}
         </div>
       ) : null}

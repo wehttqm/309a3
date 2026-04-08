@@ -159,7 +159,7 @@ export default function Navbar() {
             size="sm"
             onClick={() => navigate("/businesses")}
           >
-            Businesses
+            Businesses Directory
           </Button>
 
           {!user && !isLoading ? (

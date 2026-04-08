@@ -500,7 +500,7 @@ async function main() {
         salaryMax: 28,
         startTime: addHours(now, -2),
         endTime: addHours(now, 4),
-        note: "Active in-progress shift for /my/jobs testing and business no-show testing",
+        note: "NO-SHOW TEST for user1: active in-progress shift. Log in as user4@example.com (Maple Works Co) and report no-show from the filled jobs list.",
         status: "filled",
       },
       {
@@ -522,7 +522,7 @@ async function main() {
         salaryMax: 24,
         startTime: addDays(now, -1, 9),
         endTime: addDays(now, -1, 17),
-        note: "Canceled commitment for /my/jobs testing",
+        note: "Seeded canceled shift so user1 also has visible job history after no-show-style outcomes.",
         status: "canceled",
       },
     ],
@@ -590,6 +590,7 @@ async function main() {
   console.log("Extra regular users: user6@example.com, user7@example.com / testTEST1234!");
   console.log("Admin: user2@example.com / testTEST1234!");
   console.log("Businesses: user3@example.com, user4@example.com, user5@example.com / testTEST1234!");
+  console.log("No-show test: log in as user4@example.com and use the filled job with the note 'NO-SHOW TEST for user1...' to report a no-show for user1@example.com.");
 }
 
 main()

@@ -79,18 +79,6 @@ export default function Navbar() {
                 Qualifications
               </Link>
               <Link
-                to="/my/interests"
-                className="transition-colors hover:text-foreground"
-              >
-                Interests
-              </Link>
-              <Link
-                to="/my/invitations"
-                className="transition-colors hover:text-foreground"
-              >
-                Invitations
-              </Link>
-              <Link
                 to="/my/jobs"
                 className="transition-colors hover:text-foreground"
               >

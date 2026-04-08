@@ -14,8 +14,7 @@ const POST = async (req, res) => {
       where: { email },
     });
 
-    if (!user || user.resetToken == "") {
-      // resetToken should never be null; either its a uuid or its ""
+    if (!user || user.resetToken === "") {
       return res
         .status(404)
         .json({ error: "Reset token not found or already used." });
@@ -25,7 +24,7 @@ const POST = async (req, res) => {
       return res.status(410).json({ error: "Reset token has expired." });
     }
 
-    if (user.email !== email) {
+    if (user.email !== normalizedEmail) {
       return res
         .status(401)
         .json({ error: "Email does not match the provided token." });
@@ -33,7 +32,7 @@ const POST = async (req, res) => {
 
     const updateData = {
       activated: true,
-      resetToken: "", // on future calls, this implies that the reset token has already been used
+      resetToken: "",
       expiresAt: new Date(0),
       ...(password ? { password } : {}),
     };

@@ -26,6 +26,10 @@ export const authApi = {
     apiClient.postAuthTokens({
       body: { email, password },
     }),
+  requestPasswordReset: (email) =>
+    apiClient.postAuthResets({
+      body: { email },
+    }),
   getRegularMe: (token) => apiClient.getUsersMe({ token }),
   getBusinessMe: (token) => apiClient.getBusinessesMe({ token }),
   registerRegular: (payload) =>
@@ -40,6 +44,11 @@ export const authApi = {
     apiClient.postAuthResetsResetToken({
       pathParams: { resetToken },
       body: { email },
+    }),
+  resetPassword: (resetToken, email, password) =>
+    apiClient.postAuthResetsResetToken({
+      pathParams: { resetToken },
+      body: { email, password },
     }),
 }
 

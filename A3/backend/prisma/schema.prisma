@@ -13,7 +13,7 @@ model User {
   email     String   @unique
   password  String
 
-  resetToken String   @default(uuid())
+  resetToken String @unique @default(uuid())
   expiresAt  DateTime
 
   // "regular", "business", "admin"

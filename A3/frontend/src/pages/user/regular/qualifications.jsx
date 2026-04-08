@@ -5,6 +5,14 @@ import { positionTypeApi, qualificationApi, resolveApiUrl } from "@/lib/api/clie
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
@@ -33,6 +41,59 @@ function countByStatus(items, status) {
   return items.filter((item) => item.status === status).length
 }
 
+function isPendingStatus(status) {
+  return ["created", "submitted", "revised"].includes(status)
+}
+
+function statusLabel(status) {
+  switch (status) {
+    case "created":
+      return "Draft"
+    case "submitted":
+      return "Under review"
+    case "revised":
+      return "Updated"
+    case "approved":
+      return "Approved"
+    case "rejected":
+      return "Changes needed"
+    default:
+      return status || "Unknown"
+  }
+}
+
+function statusHelpText(status) {
+  switch (status) {
+    case "created":
+      return "Finish the details and submit it when you are ready."
+    case "submitted":
+      return "Your request has been sent and is waiting for review."
+    case "revised":
+      return "Your updated request is waiting for another review."
+    case "approved":
+      return "You can use this qualification for matching positions."
+    case "rejected":
+      return "Open it to update your note or document and send a revised version."
+    default:
+      return ""
+  }
+}
+
+function sortQualifications(items) {
+  return [...items].sort((a, b) => {
+    const aPending = isPendingStatus(a.status)
+    const bPending = isPendingStatus(b.status)
+
+    if (aPending !== bPending) {
+      return aPending ? -1 : 1
+    }
+
+    const aTime = new Date(a.updatedAt || 0).getTime()
+    const bTime = new Date(b.updatedAt || 0).getTime()
+    return bTime - aTime
+  })
+}
+
 export const RegularQualificationsPage = () => {
   const navigate = useNavigate()
   const [positionTypes, setPositionTypes] = useState([])
@@ -46,7 +107,9 @@ export const RegularQualificationsPage = () => {
   const [isLoadingTypes, setIsLoadingTypes] = useState(true)
   const [isLoadingQualifications, setIsLoadingQualifications] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
   const [createdQualification, setCreatedQualification] = useState(null)
 
   const loadPositionTypes = async () => {
@@ -101,20 +164,44 @@ export const RegularQualificationsPage = () => {
     return qualificationByPositionTypeId.get(Number(form.position_type_id)) || null
   }, [form.position_type_id, qualificationByPositionTypeId])
 
+  const sortedQualifications = useMemo(() => sortQualifications(qualifications), [qualifications])
+  const pendingQualifications = useMemo(
+    () => sortedQualifications.filter((qualification) => isPendingStatus(qualification.status)),
+    [sortedQualifications],
+  )
+  const otherQualifications = useMemo(
+    () => sortedQualifications.filter((qualification) => !isPendingStatus(qualification.status)),
+    [sortedQualifications],
+  )
+
+  const resetCreateForm = () => {
+    setForm({ position_type_id: "", note: "" })
+    setSelectedFile(null)
+  }
+
+  const handleCreateModalChange = (open) => {
+    setIsCreateModalOpen(open)
+    if (!open) {
+      resetCreateForm()
+      setError("")
+    }
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault()
     if (!form.position_type_id) {
-      setError("Please select a position type.")
+      setError("Please choose the position you want to add.")
       return
     }
 
     if (duplicateQualification) {
-      setError("A qualification for this position type already exists. Open the existing qualification instead.")
+      setError("You already have a qualification for this position. Open the existing one instead.")
       return
     }
 
     setIsSubmitting(true)
     setError("")
+    setSuccess("")
 
     try {
       const qualification = await qualificationApi.create({
@@ -127,14 +214,13 @@ export const RegularQualificationsPage = () => {
       }
 
       setCreatedQualification(qualification)
-      setForm({ position_type_id: "", note: "" })
-      setSelectedFile(null)
+      setSuccess("Qualification created. You can open it any time to upload documents, update your note, or submit it for review.")
+      handleCreateModalChange(false)
       await loadQualifications(1, pagination.limit)
-      navigate(`/qualifications/${qualification.id}`)
     } catch (err) {
       const message = err.message || "Failed to create qualification."
       if (message.toLowerCase().includes("already exists")) {
-        setError("A qualification for this position type already exists. Open the existing qualification below instead of creating a duplicate.")
+        setError("You already have a qualification for this position. Open the existing one below instead of creating a duplicate.")
       } else {
         setError(message)
       }
@@ -145,19 +231,23 @@ export const RegularQualificationsPage = () => {
 
   const totalPages = Math.max(1, Math.ceil((pagination.count || 0) / pagination.limit))
   const approvedCount = countByStatus(qualifications, "approved")
-  const pendingCount = qualifications.filter((qualification) => ["created", "submitted", "revised"].includes(qualification.status)).length
+  const pendingCount = qualifications.filter((qualification) => isPendingStatus(qualification.status)).length
   const rejectedCount = countByStatus(qualifications, "rejected")
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-10">
-      <div className="mb-8 flex items-end justify-between gap-4">
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Qualifications</h1>
-          <p className="mt-2 text-muted-foreground">
-            View all of your qualifications, including approved ones, continue editing existing requests, or create a new one for a visible position type you have not already requested.
+          <p className="mt-2 max-w-3xl text-muted-foreground">
+            Keep track of your qualifications, see what still needs attention, and add new qualifications when you are ready.
           </p>
         </div>
-        <Badge variant="secondary">Regular</Badge>
+        <div className="flex items-center gap-3">   
+          <Button type="button" onClick={() => handleCreateModalChange(true)}>
+            Add Qualification
+          </Button>
+        </div>
       </div>
 
       {error ? (
@@ -166,41 +256,72 @@ export const RegularQualificationsPage = () => {
         </div>
       ) : null}
 
-      <div className="mb-6 grid gap-4 md:grid-cols-3">
-        <Card size="sm">
-          <CardHeader>
-            <CardTitle>Approved</CardTitle>
-            <CardDescription>Qualifications you can already use.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold">{approvedCount}</div>
-          </CardContent>
-        </Card>
-        <Card size="sm">
-          <CardHeader>
-            <CardTitle>In Progress</CardTitle>
-            <CardDescription>Created, submitted, or revised.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold">{pendingCount}</div>
-          </CardContent>
-        </Card>
-        <Card size="sm">
-          <CardHeader>
-            <CardTitle>Rejected</CardTitle>
-            <CardDescription>Requests that may need revision.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold">{rejectedCount}</div>
-          </CardContent>
-        </Card>
-      </div>
+      {success ? (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          <span>{success}</span>
+          {createdQualification ? (
+            <Button type="button" variant="outline" onClick={() => navigate(`/qualifications/${createdQualification.id}`)}>
+              Open latest qualification
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
 
-      <Card className="mb-6">
+      {pendingQualifications.length > 0 ? (
+        <Card className="mb-6 border-primary/15 bg-primary/5">
+          <CardHeader>
+            <CardTitle>Pending Qualifications</CardTitle>
+            <CardDescription>
+              These are the items that still need action from you or are waiting for review.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isLoadingQualifications ? (
+              <div className="text-sm text-muted-foreground">Loading your qualifications...</div>
+            ) : (
+              <div className="space-y-3">
+                {pendingQualifications.map((qualification) => {
+                  const documentUrl = resolveApiUrl(qualification.document)
+                  return (
+                    <div
+                      key={qualification.id}
+                      className="flex flex-col gap-4 rounded-2xl border bg-background px-4 py-4 md:flex-row md:items-center md:justify-between"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="font-medium">{qualification.position_type?.name || "Unknown position"}</div>
+                          <Badge variant={badgeVariant(qualification.status)}>{statusLabel(qualification.status)}</Badge>
+                        </div>
+                        <div className="text-sm text-muted-foreground">{statusHelpText(qualification.status)}</div>
+                        <div className="text-sm text-muted-foreground">Last updated {formatDateTime(qualification.updatedAt)}</div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        {documentUrl ? (
+                          <Button asChild type="button" variant="outline">
+                            <a href={documentUrl} target="_blank" rel="noreferrer">
+                              Open document
+                            </a>
+                          </Button>
+                        ) : null}
+                        <Button type="button" onClick={() => navigate(`/qualifications/${qualification.id}`)}>
+                          Continue
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      <Card>
         <CardHeader>
-          <CardTitle>Your Existing Qualifications</CardTitle>
+          <CardTitle>Approved and Previous Qualifications</CardTitle>
           <CardDescription>
-            Approved qualifications are shown here together with created, submitted, revised, and rejected requests. Open any qualification to update its note, upload or replace the document, and perform the next allowed action.
+            Review approved qualifications and any items that were previously sent back for changes.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -208,11 +329,15 @@ export const RegularQualificationsPage = () => {
             <div className="text-sm text-muted-foreground">Loading your qualifications...</div>
           ) : qualifications.length === 0 ? (
             <div className="rounded-xl border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">
-              You do not have any qualification requests yet.
+              You have not added any qualifications yet.
+            </div>
+          ) : otherQualifications.length === 0 ? (
+            <div className="rounded-xl border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">
+              Your non-pending qualifications will appear here once they are approved or sent back for changes.
             </div>
           ) : (
             <div className="space-y-3">
-              {qualifications.map((qualification) => {
+              {otherQualifications.map((qualification) => {
                 const documentUrl = resolveApiUrl(qualification.document)
                 return (
                   <div
@@ -221,12 +346,11 @@ export const RegularQualificationsPage = () => {
                   >
                     <div className="space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <div className="font-medium">{qualification.position_type?.name || "Unknown position type"}</div>
-                        <Badge variant={badgeVariant(qualification.status)}>{qualification.status}</Badge>
+                        <div className="font-medium">{qualification.position_type?.name || "Unknown position"}</div>
+                        <Badge variant={badgeVariant(qualification.status)}>{statusLabel(qualification.status)}</Badge>
                       </div>
-                      <div className="text-sm text-muted-foreground">
-                        Updated {formatDateTime(qualification.updatedAt)}
-                      </div>
+                      <div className="text-sm text-muted-foreground">{statusHelpText(qualification.status)}</div>
+                      <div className="text-sm text-muted-foreground">Last updated {formatDateTime(qualification.updatedAt)}</div>
                       <div className="text-sm text-muted-foreground line-clamp-2">
                         {qualification.note || "No note added yet."}
                       </div>
@@ -236,12 +360,12 @@ export const RegularQualificationsPage = () => {
                       {documentUrl ? (
                         <Button asChild type="button" variant="outline">
                           <a href={documentUrl} target="_blank" rel="noreferrer">
-                            Open Document
+                            Open document
                           </a>
                         </Button>
                       ) : null}
                       <Button type="button" onClick={() => navigate(`/qualifications/${qualification.id}`)}>
-                        Edit Qualification
+                        Revise
                       </Button>
                     </div>
                   </div>
@@ -291,17 +415,18 @@ export const RegularQualificationsPage = () => {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Create Qualification</CardTitle>
-          <CardDescription>
-            Matches <code>POST /qualifications</code> and optionally uploads a PDF through <code>PUT /qualifications/:qualificationId/document</code>. Position types that already have a qualification are removed from the create list.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <Dialog open={isCreateModalOpen} onOpenChange={handleCreateModalChange}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Add Qualification</DialogTitle>
+            <DialogDescription>
+              Add a new qualification for a position you want to work in. You can upload your PDF now or later.
+            </DialogDescription>
+          </DialogHeader>
+
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <Label htmlFor="position_type_id">Position Type</Label>
+              <Label htmlFor="position_type_id">Position</Label>
               <select
                 id="position_type_id"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -309,7 +434,7 @@ export const RegularQualificationsPage = () => {
                 onChange={(event) => setForm((current) => ({ ...current, position_type_id: event.target.value }))}
                 disabled={isLoadingTypes || isSubmitting}
               >
-                <option value="">Select a visible position type</option>
+                <option value="">Choose a position</option>
                 {availablePositionTypes.map((positionType) => (
                   <option key={positionType.id} value={positionType.id}>
                     {positionType.name}
@@ -318,30 +443,30 @@ export const RegularQualificationsPage = () => {
               </select>
               {availablePositionTypes.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
-                  You already have a qualification for every visible position type.
+                  You already have a qualification for every visible position right now.
                 </p>
               ) : null}
             </div>
 
             {duplicateQualification ? (
               <div className="rounded-xl border border-amber-300/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-800">
-                A qualification for this position type already exists with status <span className="font-medium">{duplicateQualification.status}</span>.
+                You already have a qualification for this position.
                 <div className="mt-3">
                   <Button type="button" variant="outline" onClick={() => navigate(`/qualifications/${duplicateQualification.id}`)}>
-                    Open Existing Qualification
+                    Open existing qualification
                   </Button>
                 </div>
               </div>
             ) : null}
 
             <div className="space-y-2">
-              <Label htmlFor="note">Note</Label>
+              <Label htmlFor="note">Notes</Label>
               <Textarea
                 id="note"
                 rows={6}
                 value={form.note}
                 onChange={(event) => setForm((current) => ({ ...current, note: event.target.value }))}
-                placeholder="Add supporting notes for your qualification request."
+                placeholder="Add anything you want the reviewer to know."
                 disabled={isSubmitting}
               />
             </div>
@@ -356,27 +481,18 @@ export const RegularQualificationsPage = () => {
                 onChange={(event) => setSelectedFile(event.target.files?.[0] || null)}
               />
               <p className="text-xs text-muted-foreground">
-                Optional. Upload a PDF certificate or supporting document.
+                Optional. Upload a certificate or supporting document as a PDF.
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
+            <DialogFooter>
               <Button type="submit" disabled={isSubmitting || isLoadingTypes || availablePositionTypes.length === 0}>
-                {isSubmitting ? "Creating..." : "Create Qualification"}
+                {isSubmitting ? "Creating..." : "Create qualification"}
               </Button>
-              {createdQualification ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => navigate(`/qualifications/${createdQualification.id}`)}
-                >
-                  Open Latest Request
-                </Button>
-              ) : null}
-            </div>
+            </DialogFooter>
           </form>
-        </CardContent>
-      </Card>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

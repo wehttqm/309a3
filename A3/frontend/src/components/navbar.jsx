@@ -39,28 +39,27 @@ export default function Navbar() {
           className="flex cursor-pointer items-center gap-2 text-sm text-foreground transition-colors hover:text-foreground"
         >
           <svg
-            width="18"
-            height="18"
-            viewBox="0 0 18 18"
+            width="20"
+            height="20"
+            viewBox="0 0 64 64"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+            className="shrink-0"
           >
-            <circle
-              cx="5.5"
-              cy="9"
-              r="4.5"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            />
-            <circle
-              cx="12.5"
-              cy="9"
-              r="4.5"
-              stroke="currentColor"
-              strokeWidth="1.5"
+            <defs>
+              <linearGradient id="dentallink-logo" x1="10" y1="8" x2="54" y2="56" gradientUnits="userSpaceOnUse">
+                <stop stopColor="#2563eb" />
+                <stop offset="1" stopColor="#60a5fa" />
+              </linearGradient>
+            </defs>
+            <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#dentallink-logo)" />
+            <path
+              d="M23.91 15.38C19.72 15.38 16.25 18.56 16.25 23.54c0 3.71 1.57 6.18 3.11 8.56 1.4 2.19 2.73 4.26 2.73 6.95 0 4.92 2.91 9.56 6.82 9.56 2.32 0 3.31-1.81 3.91-3.82.65-2.17 1.01-4.52 2.68-4.52s2.03 2.35 2.68 4.52c.6 2.01 1.59 3.82 3.91 3.82 3.91 0 6.82-4.64 6.82-9.56 0-2.69 1.33-4.76 2.73-6.95 1.54-2.38 3.11-4.85 3.11-8.56 0-4.98-3.47-8.16-7.66-8.16-2.31 0-4.62.79-6.94 2.38-2.31-1.59-4.62-2.38-6.94-2.38Z"
+              fill="white"
             />
           </svg>
-          StaffLink
+          DentalLink
         </button>
 
         {/* Middle: Role-based links */}

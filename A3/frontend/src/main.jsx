@@ -9,6 +9,7 @@ import { Landing } from "@/pages/public/landing.tsx"
 import { ProtectedRoute } from "./components/protected-route"
 import "./index.css"
 import { Login } from "./pages/auth/login"
+import { ActivateAccountPage } from "./pages/auth/activate-account"
 import { BusinessRegister } from "./pages/user/business/register"
 import { CommonJobs } from "./pages/user/common/jobs"
 import { CommonProfile } from "./pages/user/common/profile"
@@ -82,6 +83,7 @@ createRoot(document.getElementById("root")).render(
           <Route path="/register/regular" element={<RegularRegister />} />
           <Route path="/register/business" element={<BusinessRegister />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/activate-account" element={<ActivateAccountPage />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

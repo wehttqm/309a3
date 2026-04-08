@@ -36,6 +36,11 @@ export const authApi = {
     apiClient.postBusinesses({
       body: payload,
     }),
+  activateAccount: (resetToken, email) =>
+    apiClient.postAuthResetsResetToken({
+      pathParams: { resetToken },
+      body: { email },
+    }),
 }
 
 export const adminApi = {

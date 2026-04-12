@@ -151,7 +151,11 @@ const POST = async (req, res) => {
       filledJobs: conflictingJobs,
     };
 
-    if (!isDiscoverable(userForDiscoverability, now, availabilityTimeoutMs)) {
+    if (!isDiscoverable(userForDiscoverability, now, availabilityTimeoutMs, {
+      positionTypeId: interest.job.positionTypeId,
+      jobStartTime: interest.job.startTime,
+      jobEndTime: interest.job.endTime,
+    })) {
       return res
         .status(403)
         .json({ error: "Regular user is not discoverable." });

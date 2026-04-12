@@ -1,27 +1,44 @@
 const { prisma } = require("../../../utils/prisma_client.js");
-const { deriveAvailabilityState, getAvailabilityTimeoutMs } = require("../../../utils/availability.js");
+const {
+  deriveAvailabilityState,
+  getAvailabilityTimeoutMs,
+} = require("../../../utils/availability.js");
 
 const GET = async (req, res) => {
   try {
     const now = new Date();
 
-    const user = await prisma.user.findUnique({
-      where: { id: req.auth.id },
-    });
+    const [user, availabilityTimeoutSetting, approvedQualificationCount] =
+      await Promise.all([
+        prisma.user.findUnique({
+          where: { id: req.auth.id },
+        }),
+        prisma.systemSetting.findUnique({
+          where: { key: "availability-timeout" },
+        }),
+        prisma.qualification.count({
+          where: {
+            userId: req.auth.id,
+            status: "approved",
+          },
+        }),
+      ]);
 
     if (!user) return res.status(404).json({ error: "User not found." });
 
-    const availabilityTimeoutSetting = await prisma.systemSetting.findUnique({
-      where: { key: "availability-timeout" },
-    });
     const availabilityTimeoutMs = getAvailabilityTimeoutMs(
       availabilityTimeoutSetting,
     );
 
-    const { effectiveAvailable } = deriveAvailabilityState({
+    const {
+      effectiveAvailable,
+      availabilityState,
+      message: availabilityMessage,
+    } = deriveAvailabilityState({
       user,
       now,
       availabilityTimeoutMs,
+      approvedQualifications: approvedQualificationCount,
     });
 
     return res.status(200).json({
@@ -32,6 +49,9 @@ const GET = async (req, res) => {
       activated: user.activated,
       suspended: user.suspended,
       available: effectiveAvailable,
+      raw_available: user.available,
+      availability_state: availabilityState,
+      availability_message: availabilityMessage,
       role: user.role,
       phone_number: user.phone_number,
       postal_address: user.postal_address,
@@ -40,6 +60,10 @@ const GET = async (req, res) => {
       avatar: user.avatar,
       resume: user.resume,
       biography: user.biography,
+      approved_qualifications: approvedQualificationCount,
+      can_set_available:
+        !user.suspended && approvedQualificationCount > 0 && user.activated,
+      can_set_unavailable: !user.suspended,
     });
   } catch (error) {
     console.error("GET /users/me error:", error);
@@ -59,7 +83,6 @@ const PATCH = async (req, res) => {
       biography,
     } = req.body;
 
-    // Check for unexpected fields
     const allowedFields = [
       "first_name",
       "last_name",
@@ -78,7 +101,6 @@ const PATCH = async (req, res) => {
         .json({ error: `Unexpected fields: ${extraFields.join(", ")}` });
     }
 
-    // Type checks
     if (first_name !== undefined && typeof first_name !== "string")
       return res.status(400).json({ error: "first_name must be a string." });
     if (last_name !== undefined && typeof last_name !== "string")

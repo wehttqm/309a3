@@ -12,7 +12,7 @@ export function getStoredToken() {
 
 export function resolveApiUrl(value) {
   if (!value) return null
-  if (/^https?:\/\//i.test(value)) return value
+  if (/^(https?:\/\/|blob:|data:)/i.test(value)) return value
   return `${BACKEND_URL}${value.startsWith("/") ? value : `/${value}`}`
 }
 

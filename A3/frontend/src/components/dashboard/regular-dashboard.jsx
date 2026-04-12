@@ -13,7 +13,7 @@ import {
   UserRoundCheck,
 } from "lucide-react"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/user-avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -118,11 +118,6 @@ function AvailabilityExplainer({ status }) {
   return "Unavailable pauses new matching until you turn availability back on."
 }
 
-function getInitials(user) {
-  const first = user?.first_name?.[0] || user?.name?.[0] || user?.email?.[0] || "U"
-  const last = user?.last_name?.[0] || user?.name?.split(" ")?.[1]?.[0] || ""
-  return `${first}${last}`.toUpperCase()
-}
 
 export function RegularDashboard() {
   const { user, refreshUser } = useAuth()
@@ -377,12 +372,7 @@ export function RegularDashboard() {
     <div className="mx-auto max-w-6xl px-6 py-8">
       <div className="mb-6 flex flex-col gap-4 rounded-3xl border bg-card px-5 py-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <Avatar className="h-14 w-14 border bg-background">
-            <AvatarImage src={user?.avatar || undefined} />
-            <AvatarFallback className="text-sm font-semibold">
-              {getInitials(user)}
-            </AvatarFallback>
-          </Avatar>
+          <UserAvatar user={user} className="h-14 w-14 border bg-background" fallbackClassName="text-sm font-semibold" />
           <div>
             <div className="mb-1 flex flex-wrap items-center gap-2">
               <Badge variant="secondary">Worker Dashboard</Badge>

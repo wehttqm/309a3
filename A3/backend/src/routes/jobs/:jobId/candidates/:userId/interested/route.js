@@ -50,7 +50,11 @@ const PATCH = async (req, res) => {
     const availabilityTimeoutMs =
       Number(availabilityTimeoutSetting.value) * 1000;
 
-    if (!isDiscoverable(user, now, availabilityTimeoutMs)) {
+    if (!isDiscoverable(user, now, availabilityTimeoutMs, {
+      positionTypeId: job.positionTypeId,
+      jobStartTime: job.startTime,
+      jobEndTime: job.endTime,
+    })) {
       return res.status(403).json({ error: "User is no longer discoverable." });
     }
 

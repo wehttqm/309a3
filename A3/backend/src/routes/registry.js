@@ -62,13 +62,14 @@ const routeDefinitions = [
   ),
   defineRoute("/users", "GET", "strictAuth", "checkRoleAdmin", "updateLastActive"),
   defineRoute("/users/me", "GET", "strictAuth", "checkRoleRegular"),
-  defineRoute("/users/me/dashboard", "GET", "strictAuth", "checkRoleRegular"),
+  defineRoute("/users/me/dashboard", "GET", "strictAuth", "checkRoleRegular", "updateLastActive"),
   defineRoute(
     "/users/me/avatar",
     "PUT",
     "strictAuth",
     "checkRoleRegularOrBusiness",
     "uploadUserAvatar",
+    "updateLastActive",
   ),
   defineRoute(
     "/users/me/resume",
@@ -76,6 +77,7 @@ const routeDefinitions = [
     "strictAuth",
     "checkRoleRegularOrBusiness",
     "uploadUserResume",
+    "updateLastActive",
   ),
   defineRoute(
     "/users/:userId/suspended",
@@ -89,12 +91,13 @@ const routeDefinitions = [
     "strictAuth",
     "checkRoleRegular",
     "birthdayFormatOptional",
+    "updateLastActive",
   ),
-  defineRoute("/users/me/available", "PATCH", "strictAuth", "checkRoleRegular"),
-  defineRoute("/users/me/invitations", "GET", "strictAuth", "checkRoleRegular"),
-  defineRoute("/users/me/interests", "GET", "strictAuth", "checkRoleRegular"),
-  defineRoute("/users/me/jobs", "GET", "strictAuth", "checkRoleRegular"),
-  defineRoute("/users/me/qualifications", "GET", "strictAuth", "checkRoleRegular"),
+  defineRoute("/users/me/available", "PATCH", "strictAuth", "checkRoleRegular", "updateLastActive"),
+  defineRoute("/users/me/invitations", "GET", "strictAuth", "checkRoleRegular", "updateLastActive"),
+  defineRoute("/users/me/interests", "GET", "strictAuth", "checkRoleRegular", "updateLastActive"),
+  defineRoute("/users/me/jobs", "GET", "strictAuth", "checkRoleRegular", "updateLastActive"),
+  defineRoute("/users/me/qualifications", "GET", "strictAuth", "checkRoleRegular", "updateLastActive"),
 
   // Businesses
   defineRoute(
@@ -139,7 +142,7 @@ const routeDefinitions = [
 
   // Position Types
   defineRoute("/position-types", "POST", "strictAuth", "checkRoleAdmin"),
-  defineRoute("/position-types", "GET", "strictAuth"),
+  defineRoute("/position-types", "GET", "strictAuth", "updateLastActive"),
   defineRoute(
     "/position-types/:positionTypeId",
     "PATCH",
@@ -155,22 +158,23 @@ const routeDefinitions = [
 
   // Qualifications
   defineRoute("/qualifications", "GET", "strictAuth", "checkRoleAdmin"),
-  defineRoute("/qualifications", "POST", "strictAuth", "checkRoleRegular"),
-  defineRoute("/qualifications/:qualificationId", "GET", "strictAuth"),
-  defineRoute("/qualifications/:qualificationId", "PATCH", "strictAuth"),
+  defineRoute("/qualifications", "POST", "strictAuth", "checkRoleRegular", "updateLastActive"),
+  defineRoute("/qualifications/:qualificationId", "GET", "strictAuth", "updateLastActive"),
+  defineRoute("/qualifications/:qualificationId", "PATCH", "strictAuth", "updateLastActive"),
   defineRoute(
     "/qualifications/:qualificationId/document",
     "PUT",
     "strictAuth",
     "checkRoleRegularOrBusiness",
     "uploadQualificationDocument",
+    "updateLastActive",
   ),
 
   // Jobs
-  defineRoute("/jobs", "GET", "strictAuth", "checkRoleRegular"),
-  defineRoute("/jobs/:jobId", "GET", "strictAuth", "checkRoleRegularOrBusiness"),
+  defineRoute("/jobs", "GET", "strictAuth", "checkRoleRegular", "updateLastActive"),
+  defineRoute("/jobs/:jobId", "GET", "strictAuth", "checkRoleRegularOrBusiness", "updateLastActive"),
   defineRoute("/jobs/:jobId/no-show", "PATCH", "strictAuth", "checkRoleBusiness"),
-  defineRoute("/jobs/:jobId/interested", "PATCH", "strictAuth", "checkRoleRegular"),
+  defineRoute("/jobs/:jobId/interested", "PATCH", "strictAuth", "checkRoleRegular", "updateLastActive"),
   defineRoute("/jobs/:jobId/interests", "GET", "strictAuth", "checkRoleBusiness"),
   defineRoute("/jobs/:jobId/candidates", "GET", "strictAuth", "checkRoleBusiness"),
   defineRoute(
@@ -187,18 +191,20 @@ const routeDefinitions = [
   ),
 
   // Negotiations
-  defineRoute("/negotiations", "POST", "strictAuth", "checkRoleRegularOrBusiness"),
+  defineRoute("/negotiations", "POST", "strictAuth", "checkRoleRegularOrBusiness", "updateLastActive"),
   defineRoute(
     "/negotiations/me",
     "GET",
     "strictAuth",
     "checkRoleRegularOrBusiness",
+    "updateLastActive",
   ),
   defineRoute(
     "/negotiations/me/decision",
     "PATCH",
     "strictAuth",
     "checkRoleRegularOrBusiness",
+    "updateLastActive",
   ),
 ];
 

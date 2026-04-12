@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/user-avatar"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -9,33 +9,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/context/auth-context"
+import { getUserDisplayName } from "@/lib/user-status"
 import { ChevronDown } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
-
-function getDisplayName(user) {
-  if (!user) return ""
-  if (user.name) return user.name
-  if (user.business_name) return user.business_name
-  if (user.first_name || user.last_name) {
-    return `${user.first_name || ""} ${user.last_name || ""}`.trim()
-  }
-  if (user.owner_name) return user.owner_name
-  return user.email || ""
-}
-
-function getInitials(user) {
-  const displayName = getDisplayName(user)
-
-  if (!displayName) return "?"
-
-  return displayName
-    .split(" ")
-    .filter(Boolean)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2)
-}
 
 export default function Navbar() {
   const { user, logout, isLoading } = useAuth()
@@ -46,11 +22,8 @@ export default function Navbar() {
     navigate("/")
   }
 
-  const displayName = getDisplayName(user)
-  const initials = getInitials(user)
-
-  const showRealtimeLinks =
-    user?.role === "regular" || user?.role === "business"
+  const displayName = getUserDisplayName(user)
+  const showRealtimeLinks = user?.role === "regular" || user?.role === "business"
 
   return (
     <div className="fixed top-4 left-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl -translate-x-1/2 px-0">
@@ -86,28 +59,16 @@ export default function Navbar() {
         <div className="hidden items-center gap-4 text-sm text-foreground md:flex">
           {user?.role === "regular" && (
             <>
-              <Link
-                to="/"
-                className="transition-colors hover:text-foreground"
-              >
+              <Link to="/" className="transition-colors hover:text-foreground">
                 Dashboard
               </Link>
-              <Link
-                to="/jobs"
-                className="transition-colors hover:text-foreground"
-              >
+              <Link to="/jobs" className="transition-colors hover:text-foreground">
                 Jobs
               </Link>
-              <Link
-                to="/my/qualifications"
-                className="transition-colors hover:text-foreground"
-              >
+              <Link to="/my/qualifications" className="transition-colors hover:text-foreground">
                 Qualifications
               </Link>
-              <Link
-                to="/my/jobs"
-                className="transition-colors hover:text-foreground"
-              >
+              <Link to="/my/jobs" className="transition-colors hover:text-foreground">
                 My Jobs
               </Link>
             </>
@@ -115,22 +76,13 @@ export default function Navbar() {
 
           {user?.role === "business" && (
             <>
-              <Link
-                to="/"
-                className="transition-colors hover:text-foreground"
-              >
+              <Link to="/" className="transition-colors hover:text-foreground">
                 Dashboard
               </Link>
-              <Link
-                to="/business/jobs"
-                className="transition-colors hover:text-foreground"
-              >
+              <Link to="/business/jobs" className="transition-colors hover:text-foreground">
                 My Postings
               </Link>
-              <Link
-                to="/business/jobs/create"
-                className="transition-colors hover:text-foreground"
-              >
+              <Link to="/business/jobs/create" className="transition-colors hover:text-foreground">
                 Post a Job
               </Link>
             </>
@@ -138,16 +90,10 @@ export default function Navbar() {
 
           {showRealtimeLinks && (
             <>
-              <Link
-                to="/notifications"
-                className="transition-colors hover:text-foreground"
-              >
+              <Link to="/notifications" className="transition-colors hover:text-foreground">
                 Notifications
               </Link>
-              <Link
-                to="/negotiation"
-                className="transition-colors hover:text-foreground"
-              >
+              <Link to="/negotiation" className="transition-colors hover:text-foreground">
                 Negotiation
               </Link>
             </>
@@ -155,34 +101,19 @@ export default function Navbar() {
 
           {user?.role === "admin" && (
             <>
-              <Link
-                to="/admin/users"
-                className="transition-colors hover:text-foreground"
-              >
+              <Link to="/admin/users" className="transition-colors hover:text-foreground">
                 Users
               </Link>
-              <Link
-                to="/admin/businesses"
-                className="transition-colors hover:text-foreground"
-              >
+              <Link to="/admin/businesses" className="transition-colors hover:text-foreground">
                 Businesses
               </Link>
-              <Link
-                to="/admin/positions"
-                className="transition-colors hover:text-foreground"
-              >
+              <Link to="/admin/positions" className="transition-colors hover:text-foreground">
                 Positions
               </Link>
-              <Link
-                to="/admin/qualifications"
-                className="transition-colors hover:text-foreground"
-              >
+              <Link to="/admin/qualifications" className="transition-colors hover:text-foreground">
                 Qualifications
               </Link>
-              <Link
-                to="/admin/config"
-                className="transition-colors hover:text-foreground"
-              >
+              <Link to="/admin/config" className="transition-colors hover:text-foreground">
                 Config
               </Link>
             </>
@@ -190,21 +121,13 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate("/businesses")}
-          >
+          <Button variant="ghost" size="sm" onClick={() => navigate("/businesses")}>
             Businesses Directory
           </Button>
 
           {!user && !isLoading ? (
             <>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/login")}
-              >
+              <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>
                 Log In
               </Button>
               <Button size="sm" onClick={() => navigate("/register/regular")}>
@@ -216,79 +139,44 @@ export default function Navbar() {
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center gap-2"
-                >
-                  <Avatar className="h-7 w-7">
-                    <AvatarImage src={user.avatar || undefined} />
-                    <AvatarFallback className="text-xs">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="hidden max-w-[140px] truncate text-sm md:inline">
-                    {displayName}
-                  </span>
+                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                  <UserAvatar user={user} className="h-7 w-7" fallbackClassName="text-xs" />
+                  <span className="hidden max-w-[140px] truncate text-sm md:inline">{displayName}</span>
                   <ChevronDown className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
 
               <DropdownMenuContent align="end" className="w-52">
                 <DropdownMenuLabel className="text-xs font-normal text-foreground">
-                  Signed in as{" "}
-                  <span className="font-medium text-foreground">
-                    {user.role}
-                  </span>
+                  Signed in as <span className="font-medium text-foreground">{user.role}</span>
                 </DropdownMenuLabel>
 
                 <DropdownMenuSeparator />
 
                 {user.role === "regular" && (
                   <>
-                    <DropdownMenuItem onClick={() => navigate("/profile")}>
-                      My Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/resume")}>
-                      Upload Resume
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/notifications")}>
-                      Notifications
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/negotiation")}>
-                      Negotiation
-                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/profile")}>My Profile</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/resume")}>Upload Resume</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/notifications")}>Notifications</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/negotiation")}>Negotiation</DropdownMenuItem>
                   </>
                 )}
 
                 {user.role === "business" && (
                   <>
-                    <DropdownMenuItem
-                      onClick={() => navigate("/profile/business")}
-                    >
-                      Business Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/notifications")}>
-                      Notifications
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/negotiation")}>
-                      Negotiation
-                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/profile/business")}>Business Profile</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/notifications")}>Notifications</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/negotiation")}>Negotiation</DropdownMenuItem>
                   </>
                 )}
 
                 {user.role === "admin" && (
-                  <DropdownMenuItem onClick={() => navigate("/profile/admin")}>
-                    Admin Profile
-                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/profile/admin")}>Admin Profile</DropdownMenuItem>
                 )}
 
                 <DropdownMenuSeparator />
 
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="text-destructive"
-                >
+                <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                   Log Out
                 </DropdownMenuItem>
               </DropdownMenuContent>

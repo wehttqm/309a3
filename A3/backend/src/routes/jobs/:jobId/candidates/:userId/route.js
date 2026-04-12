@@ -1,4 +1,5 @@
 const { prisma } = require("../../../../../utils/prisma_client.js");
+const { isDiscoverable } = require("../../../../../utils/is_discoverable.js");
 
 const GET = async (req, res) => {
   try {
@@ -54,17 +55,11 @@ const GET = async (req, res) => {
         Number(availabilityTimeoutSetting.value) * 1000;
       const cutoff = new Date(now.getTime() - availabilityTimeoutMs);
 
-      const qualification = user.qualifications[0];
-      const isDiscoverable =
-        user.activated &&
-        !user.suspended &&
-        user.available &&
-        user.lastActive >= cutoff &&
-        qualification &&
-        qualification.status === "approved" &&
-        user.filledJobs.length === 0;
-
-      if (!isDiscoverable) {
+      if (!isDiscoverable(user, now, availabilityTimeoutMs, {
+        positionTypeId: job.positionTypeId,
+        jobStartTime: job.startTime,
+        jobEndTime: job.endTime,
+      })) {
         return res
           .status(403)
           .json({ error: "User is no longer discoverable." });

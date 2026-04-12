@@ -2,24 +2,46 @@ import * as React from "react"
 import { Avatar as AvatarPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
+import { getAvatarStatusMeta } from "@/lib/user-status"
 
 function Avatar({
   className,
   size = "default",
+  status,
+  showStatus = Boolean(status),
+  children,
   ...props
 }: React.ComponentProps<typeof AvatarPrimitive.Root> & {
   size?: "default" | "sm" | "lg"
+  status?: "available" | "away" | "suspended" | "unverified"
+  showStatus?: boolean
 }) {
+  const statusMeta = status ? getAvatarStatusMeta(status) : null
+
   return (
     <AvatarPrimitive.Root
       data-slot="avatar"
       data-size={size}
+      data-status={status || undefined}
       className={cn(
         "group/avatar relative flex size-8 shrink-0 rounded-full select-none after:absolute after:inset-0 after:rounded-full after:border after:border-border after:mix-blend-darken data-[size=lg]:size-10 data-[size=sm]:size-6 dark:after:mix-blend-lighten",
         className
       )}
       {...props}
-    />
+    >
+      {children}
+      {showStatus && statusMeta ? (
+        <span
+          className={cn(
+            "pointer-events-none absolute right-0 bottom-0 z-10 rounded-full ring-2 ring-background",
+            "group-data-[size=sm]/avatar:size-2 group-data-[size=default]/avatar:size-2.5 group-data-[size=lg]/avatar:size-3",
+            statusMeta.dotClassName
+          )}
+          aria-label={statusMeta.label}
+          title={statusMeta.label}
+        />
+      ) : null}
+    </AvatarPrimitive.Root>
   )
 }
 

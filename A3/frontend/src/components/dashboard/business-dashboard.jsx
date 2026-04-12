@@ -11,7 +11,7 @@ import {
   UserRound,
 } from "lucide-react"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserAvatar } from "@/components/user-avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -47,11 +47,6 @@ function statusVariant(value) {
   }
 }
 
-function getInitials(user) {
-  const first = user?.name?.[0] || user?.business_name?.[0] || user?.email?.[0] || "B"
-  const second = user?.name?.split(" ")?.[1]?.[0] || ""
-  return `${first}${second}`.toUpperCase()
-}
 
 function MetricPill({ label, value }) {
   return (
@@ -292,12 +287,11 @@ export function BusinessDashboard() {
           <CardContent className="p-5 sm:p-6">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex items-start gap-4">
-                <Avatar className="h-16 w-16 border">
-                  <AvatarImage src={business.avatar || user?.avatar || undefined} />
-                  <AvatarFallback className="text-lg font-semibold">
-                    {getInitials(user || business)}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar
+                  user={{ ...(user || {}), ...(business || {}), role: user?.role || business?.role || "business" }}
+                  className="h-16 w-16 border"
+                  fallbackClassName="text-lg font-semibold"
+                />
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant={status.verified ? "default" : "secondary"}>

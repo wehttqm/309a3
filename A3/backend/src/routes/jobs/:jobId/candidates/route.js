@@ -1,4 +1,6 @@
 const { prisma } = require("../../../../utils/prisma_client.js");
+const { isDiscoverable } = require("../../../../utils/is_discoverable.js");
+
 
 const GET = async (req, res) => {
   try {
@@ -26,7 +28,6 @@ const GET = async (req, res) => {
       Number(availabilityTimeoutSetting.value) * 1000;
     const cutoff = new Date(now.getTime() - availabilityTimeoutMs);
 
-    // Get all qualified, activated, non-suspended, available, recently active users
     const candidates = await prisma.user.findMany({
       where: {
         role: "regular",
@@ -42,11 +43,15 @@ const GET = async (req, res) => {
         },
       },
       include: {
+        qualifications: {
+          where: {
+            positionTypeId: job.positionTypeId,
+            status: "approved",
+          },
+        },
         filledJobs: {
           where: {
             status: "filled",
-            startTime: { lte: job.endTime },
-            endTime: { gte: job.startTime },
           },
         },
         interests: {
@@ -55,9 +60,12 @@ const GET = async (req, res) => {
       },
     });
 
-    // Filter out users committed to a conflicting job
-    const discoverableCandidates = candidates.filter(
-      (user) => user.filledJobs.length === 0,
+    const discoverableCandidates = candidates.filter((user) =>
+      isDiscoverable(user, now, availabilityTimeoutMs, {
+        positionTypeId: job.positionTypeId,
+        jobStartTime: job.startTime,
+        jobEndTime: job.endTime,
+      }),
     );
 
     const count = discoverableCandidates.length;

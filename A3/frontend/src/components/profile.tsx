@@ -3,14 +3,16 @@ import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useAuth } from "@/context/auth-context.jsx"
-import { apiClient } from "@/lib/api/client"
+import { apiClient, availabilityApi } from "@/lib/api/client"
+import { deriveUserAvatarStatus, formatAvatarStatusLabel, getUserDisplayName } from "@/lib/user-status"
 
 // UI Components
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { UserAvatar } from "@/components/user-avatar"
 import { RoleBadge } from "@/components/role-badge.tsx"
 import {
   Dialog,
@@ -21,7 +23,7 @@ import {
 } from "@/components/ui/dialog"
 
 // Icons
-import { Pencil, Check, X, Camera, Upload } from "lucide-react"
+import { Pencil, Check, X, Camera, Upload, UserRoundCheck } from "lucide-react"
 import { toast } from "sonner"
 
 function getNestedValue(obj: any, path: string) {
@@ -46,6 +48,7 @@ export function Profile({
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [avatarUploading, setAvatarUploading] = useState(false)
   const [avatarError, setAvatarError] = useState<string | null>(null)
+  const [isUpdatingAvailability, setIsUpdatingAvailability] = useState(false)
   const avatarInputRef = useRef<HTMLInputElement>(null)
 
   type ProfileFormValues = z.infer<typeof profileSchema>
@@ -170,19 +173,27 @@ export function Profile({
     setAvatarDialogOpen(false)
   }
 
-  const displayName =
-    user?.role === "business"
-      ? user?.business_name || user?.owner_name || user?.email || "Business"
-      : [user?.first_name, user?.last_name].filter(Boolean).join(" ") ||
-        user?.email ||
-        "?"
+  const displayName = getUserDisplayName(user) || "?"
+  const avatarStatus = deriveUserAvatarStatus(user)
+  const avatarStatusLabel = formatAvatarStatusLabel(avatarStatus)
 
-  const initials = displayName
-    .split(" ")
-    .map((part: string) => part[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2)
+  const handleAvailabilityToggle = async () => {
+    if (!user || user.role !== "regular" || isUpdatingAvailability) return
+
+    const nextAvailable = !user.available
+    setIsUpdatingAvailability(true)
+    setError("")
+
+    try {
+      const response = await availabilityApi.updateMine(nextAvailable)
+      toast.success(response?.message || (nextAvailable ? "Matching is now on." : "Matching is now paused."))
+      await refreshUser()
+    } catch (err: any) {
+      setError(err?.message || "Failed to update availability.")
+    } finally {
+      setIsUpdatingAvailability(false)
+    }
+  }
 
   if (!user || !user.role) {
     return (
@@ -242,12 +253,11 @@ export function Profile({
             onClick={() => setAvatarDialogOpen(true)}
             title="Change avatar"
           >
-            <Avatar className="h-32 w-32 border-4 border-background shadow-lg">
-              <AvatarImage src={user?.avatar} />
-              <AvatarFallback className="bg-muted text-3xl font-bold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar
+              user={user}
+              className="h-32 w-32 border-4 border-background shadow-lg"
+              fallbackClassName="bg-muted text-3xl font-bold"
+            />
             {/* Hover overlay */}
             <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
               <Camera className="h-7 w-7 text-white" />
@@ -255,7 +265,39 @@ export function Profile({
           </button>
 
           <h2 className="text-4xl font-extrabold">{displayName}</h2>
-          <RoleBadge role={user?.role} />
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <RoleBadge role={user?.role} />
+            <Badge variant={avatarStatus === "available" ? "default" : avatarStatus === "suspended" ? "destructive" : "secondary"}>
+              {avatarStatusLabel}
+            </Badge>
+            {user?.role === "regular" ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAvailabilityToggle}
+                disabled={(user?.available ? !user?.can_set_unavailable : !user?.can_set_available) || isUpdatingAvailability}
+              >
+                <UserRoundCheck className="mr-2 h-4 w-4" />
+                {isUpdatingAvailability
+                  ? "Updating..."
+                  : user?.available
+                    ? "Pause matching"
+                    : "Set available"}
+              </Button>
+            ) : null}
+          </div>
+          {user?.role === "regular" ? (
+            <p className="text-center text-sm text-muted-foreground">
+              {user?.suspended
+                ? "Suspended accounts cannot enter matching."
+                : user?.available
+                  ? "You are discoverable for qualified jobs while you remain active and have no conflicting commitment."
+                  : user?.can_set_available
+                    ? "You are currently away from matching. Turn it on when you want to be discoverable again."
+                    : "You need at least one approved qualification before matching can be turned on."}
+            </p>
+          ) : null}
         </div>
 
         <Card className="overflow-hidden">
@@ -317,12 +359,11 @@ export function Profile({
           <div className="space-y-4 py-2">
             {/* Preview */}
             <div className="flex justify-center">
-              <Avatar className="h-24 w-24 border-4 border-background shadow-md">
-                <AvatarImage src={avatarPreview ?? user?.avatar} />
-                <AvatarFallback className="bg-muted text-2xl font-bold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
+              <UserAvatar
+                user={{ ...user, avatar: avatarPreview ?? user?.avatar }}
+                className="h-24 w-24 border-4 border-background shadow-md"
+                fallbackClassName="bg-muted text-2xl font-bold"
+              />
             </div>
 
             {/* File selector */}

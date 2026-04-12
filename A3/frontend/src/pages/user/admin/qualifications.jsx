@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { AdminHelperCard } from "@/components/admin/admin-helper-card"
 
 function Pagination({ page, limit, count, onPageChange }) {
   const totalPages = Math.max(1, Math.ceil(count / limit))
@@ -138,32 +139,44 @@ export const AdminQualificationsPage = () => {
         <Badge variant="secondary">Admin</Badge>
       </div>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Filters</CardTitle>
-          <CardDescription>Matches the API for <code>GET /qualifications</code>.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="grid gap-4 md:grid-cols-4" onSubmit={applyFilters}>
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium">Keyword</label>
-              <Input value={draft.keyword} onChange={(event) => setDraft((current) => ({ ...current, keyword: event.target.value }))} placeholder="Search first name, last name, email, or phone number" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Results per page</label>
-              <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={draft.limit} onChange={(event) => setDraft((current) => ({ ...current, limit: Number(event.target.value) }))}>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-              </select>
-            </div>
-            <div className="flex items-end gap-2">
-              <Button type="submit">Apply</Button>
-              <Button type="button" variant="outline" onClick={resetFilters}>Reset</Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+      <div className="mb-6 grid gap-6 xl:grid-cols-[1.4fr_1fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle>Filters</CardTitle>
+            <CardDescription>Use filters to focus on the workers and submissions that need a review decision right now.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="grid gap-4 md:grid-cols-4" onSubmit={applyFilters}>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-medium">Keyword</label>
+                <Input value={draft.keyword} onChange={(event) => setDraft((current) => ({ ...current, keyword: event.target.value }))} placeholder="Search first name, last name, email, or phone number" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Results per page</label>
+                <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={draft.limit} onChange={(event) => setDraft((current) => ({ ...current, limit: Number(event.target.value) }))}>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+              <div className="flex items-end gap-2">
+                <Button type="submit">Apply</Button>
+                <Button type="button" variant="outline" onClick={resetFilters}>Reset</Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        <AdminHelperCard
+          title="Review guidance"
+          description="Use this queue to decide whether a worker can legitimately work a given position type."
+          bullets={[
+            'Only qualifications that still need admin attention should show up here.',
+            'Approve when the attached documents and note clearly support the requested position type.',
+            'Reject when information is missing, outdated, or does not match the qualification being requested.',
+          ]}
+        />
+      </div>
 
       {error ? <div className="mb-4 rounded-md border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div> : null}
       {success ? <div className="mb-4 rounded-md border border-emerald-300/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-700">{success}</div> : null}
@@ -177,7 +190,7 @@ export const AdminQualificationsPage = () => {
           {isLoading ? (
             <div className="py-8 text-center text-sm text-muted-foreground">Loading qualifications...</div>
           ) : data.results.length === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">No qualifications need admin attention right now.</div>
+            <div className="py-8 text-center text-sm text-muted-foreground">No qualifications need admin attention right now. This usually means the review queue is clear.</div>
           ) : (
             <>
               <div className="space-y-4">

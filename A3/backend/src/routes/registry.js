@@ -62,6 +62,7 @@ const routeDefinitions = [
   ),
   defineRoute("/users", "GET", "strictAuth", "checkRoleAdmin", "updateLastActive"),
   defineRoute("/users/me", "GET", "strictAuth", "checkRoleRegular"),
+  defineRoute("/users/me/dashboard", "GET", "strictAuth", "checkRoleRegular"),
   defineRoute(
     "/users/me/avatar",
     "PUT",
@@ -105,6 +106,7 @@ const routeDefinitions = [
   ),
   defineRoute("/businesses", "GET", "optionalAuth"),
   defineRoute("/businesses/me", "GET", "strictAuth", "checkRoleBusiness"),
+  defineRoute("/businesses/me/dashboard", "GET", "strictAuth", "checkRoleBusiness"),
   defineRoute("/businesses/me", "PATCH", "strictAuth", "locationOptional"),
   defineRoute("/businesses/me/jobs", "GET", "strictAuth", "checkRoleBusiness"),
   defineRoute("/businesses/me/jobs", "POST", "strictAuth", "checkRoleBusiness"),

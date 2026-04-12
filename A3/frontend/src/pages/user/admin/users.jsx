@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 
 import { adminApi } from "@/lib/api/client"
+import { AdminHelperCard } from "@/components/admin/admin-helper-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -102,65 +103,77 @@ export const AdminUsersPage = () => {
       <div className="mb-8 flex items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Manage Users</h1>
-          <p className="mt-2 text-muted-foreground">Search, filter, paginate, and suspend or unsuspend regular users.</p>
+          <p className="mt-2 text-muted-foreground">Find worker accounts quickly, review activation state, and suspend or restore access when intervention is needed.</p>
         </div>
         <Badge variant="secondary">Admin</Badge>
       </div>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Filters</CardTitle>
-          <CardDescription>Matches the API for <code>GET /users</code>.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="grid gap-4 md:grid-cols-4" onSubmit={applyFilters}>
-            <div className="space-y-2 md:col-span-2">
-              <label className="text-sm font-medium">Keyword</label>
-              <Input value={draft.keyword} onChange={(event) => setDraft((current) => ({ ...current, keyword: event.target.value }))} placeholder="Name, email, phone, or address" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Activated</label>
-              <select
-                className="flex h-10 w-full rounded-3xl border border-input bg-background px-3 py-2 text-sm"
-                value={draft.activated}
-                onChange={(event) => setDraft((current) => ({ ...current, activated: event.target.value }))}
-              >
-                <option value="all">All</option>
-                <option value="true">Activated</option>
-                <option value="false">Not activated</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Suspended</label>
-              <select
-                className="flex h-10 w-full rounded-3xl border border-input bg-background px-3 py-2 text-sm"
-                value={draft.suspended}
-                onChange={(event) => setDraft((current) => ({ ...current, suspended: event.target.value }))}
-              >
-                <option value="all">All</option>
-                <option value="true">Suspended</option>
-                <option value="false">Not suspended</option>
-              </select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Results per page</label>
-              <select
-                className="flex h-10 w-full rounded-3xl border border-input bg-background px-3 py-2 text-sm"
-                value={draft.limit}
-                onChange={(event) => setDraft((current) => ({ ...current, limit: Number(event.target.value) }))}
-              >
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-              </select>
-            </div>
-            <div className="flex items-end gap-2 md:col-span-3">
-              <Button type="submit">Apply</Button>
-              <Button type="button" variant="outline" onClick={resetFilters}>Reset</Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+      <div className="mb-6 grid gap-6 xl:grid-cols-[1.5fr_1fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle>Filters</CardTitle>
+            <CardDescription>Use these filters to narrow the worker list, focus on edge cases, and review account access quickly.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="grid gap-4 md:grid-cols-4" onSubmit={applyFilters}>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-sm font-medium">Keyword</label>
+                <Input value={draft.keyword} onChange={(event) => setDraft((current) => ({ ...current, keyword: event.target.value }))} placeholder="Name, email, phone, or address" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Activated</label>
+                <select
+                  className="flex h-10 w-full rounded-3xl border border-input bg-background px-3 py-2 text-sm"
+                  value={draft.activated}
+                  onChange={(event) => setDraft((current) => ({ ...current, activated: event.target.value }))}
+                >
+                  <option value="all">All</option>
+                  <option value="true">Activated</option>
+                  <option value="false">Not activated</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Suspended</label>
+                <select
+                  className="flex h-10 w-full rounded-3xl border border-input bg-background px-3 py-2 text-sm"
+                  value={draft.suspended}
+                  onChange={(event) => setDraft((current) => ({ ...current, suspended: event.target.value }))}
+                >
+                  <option value="all">All</option>
+                  <option value="true">Suspended</option>
+                  <option value="false">Not suspended</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Results per page</label>
+                <select
+                  className="flex h-10 w-full rounded-3xl border border-input bg-background px-3 py-2 text-sm"
+                  value={draft.limit}
+                  onChange={(event) => setDraft((current) => ({ ...current, limit: Number(event.target.value) }))}
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+              <div className="flex items-end gap-2 md:col-span-3">
+                <Button type="submit">Apply</Button>
+                <Button type="button" variant="outline" onClick={resetFilters}>Reset</Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        <AdminHelperCard
+          title="What admins usually do here"
+          description="This page is for intervention. Use it to find blocked accounts, review no-show consequences, and restore access when appropriate."
+          bullets={[
+            "Suspended workers can still log in, but they should not be able to make themselves available for matching.",
+            "Filter by Suspended to review workers who may need follow-up or manual reinstatement.",
+            "Search by contact details when support requests come in and you need to find a specific account quickly.",
+          ]}
+        />
+      </div>
 
       {error ? <div className="mb-4 rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div> : null}
 
@@ -173,7 +186,7 @@ export const AdminUsersPage = () => {
           {isLoading ? (
             <div className="py-8 text-center text-sm text-muted-foreground">Loading users...</div>
           ) : data.results.length === 0 ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">No users matched the current filters.</div>
+            <div className="py-8 text-center text-sm text-muted-foreground">No users matched the current filters. Clear one or more filters if you need a broader list.</div>
           ) : (
             <>
               <div className="overflow-x-auto">

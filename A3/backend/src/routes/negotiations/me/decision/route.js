@@ -49,6 +49,21 @@ const PATCH = async (req, res) => {
 
     // Check not expired
     if (now >= negotiation.expiresAt) {
+      await prisma.$transaction([
+        prisma.negotiation.update({
+          where: { id: negotiation.id },
+          data: { status: "failed" },
+        }),
+        prisma.interest.update({
+          where: { id: negotiation.interestId },
+          data: { candidateInterested: null, businessInterested: null },
+        }),
+        prisma.user.update({
+          where: { id: negotiation.userId },
+          data: { available: true, lastActive: now },
+        }),
+      ]);
+
       return res.status(409).json({ error: "Negotiation has expired." });
     }
 
@@ -89,7 +104,7 @@ const PATCH = async (req, res) => {
         }),
         prisma.user.update({
           where: { id: negotiation.userId },
-          data: { lastActive: now },
+          data: { available: true, lastActive: now },
         }),
       ]);
 

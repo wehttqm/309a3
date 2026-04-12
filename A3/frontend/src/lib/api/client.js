@@ -21,10 +21,61 @@ export const apiClient = createApiClient({
   getToken: getStoredToken,
 })
 
+
+async function requestJson(path, options = {}) {
+  const token = options.token ?? getStoredToken()
+  const headers = new Headers(options.headers || {})
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`)
+  }
+
+  if (options.body !== undefined && !(options.body instanceof FormData)) {
+    headers.set("Content-Type", "application/json")
+  }
+
+  const response = await fetch(`${BACKEND_URL}${path}`, {
+    method: options.method || "GET",
+    headers,
+    body:
+      options.body === undefined
+        ? undefined
+        : options.body instanceof FormData
+          ? options.body
+          : JSON.stringify(options.body),
+  })
+
+  const text = await response.text()
+  const payload = text ? (() => {
+    try {
+      return JSON.parse(text)
+    } catch {
+      return text
+    }
+  })() : null
+
+  if (!response.ok) {
+    const message =
+      (payload && typeof payload === "object" && (payload.error || payload.message)) ||
+      (typeof payload === "string" ? payload : `Request failed with status ${response.status}.`)
+
+    const error = new Error(message)
+    error.status = response.status
+    error.payload = payload
+    throw error
+  }
+
+  return payload
+}
+
 export const authApi = {
   login: ({ email, password }) =>
     apiClient.postAuthTokens({
       body: { email, password },
+    }),
+  requestPasswordReset: (email) =>
+    apiClient.postAuthResets({
+      body: { email },
     }),
   getRegularMe: (token) => apiClient.getUsersMe({ token }),
   getBusinessMe: (token) => apiClient.getBusinessesMe({ token }),
@@ -35,6 +86,16 @@ export const authApi = {
   registerBusiness: (payload) =>
     apiClient.postBusinesses({
       body: payload,
+    }),
+  activateAccount: (resetToken, email) =>
+    apiClient.postAuthResetsResetToken({
+      pathParams: { resetToken },
+      body: { email },
+    }),
+  resetPassword: (resetToken, email, password) =>
+    apiClient.postAuthResetsResetToken({
+      pathParams: { resetToken },
+      body: { email, password },
     }),
 }
 
@@ -125,4 +186,19 @@ export const qualificationApi = {
 
 export const regularJobsApi = {
   listMine: (query) => apiClient.getUsersMeJobs({ query }),
+}
+
+
+
+export const availabilityApi = {
+  updateMine: (available) =>
+    requestJson("/users/me/available", {
+      method: "PATCH",
+      body: { available },
+    }),
+}
+
+export const dashboardApi = {
+  getRegularDashboard: () => requestJson("/users/me/dashboard"),
+  getBusinessDashboard: () => requestJson("/businesses/me/dashboard"),
 }

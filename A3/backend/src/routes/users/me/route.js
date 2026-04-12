@@ -1,4 +1,5 @@
 const { prisma } = require("../../../utils/prisma_client.js");
+const { deriveAvailabilityState, getAvailabilityTimeoutMs } = require("../../../utils/availability.js");
 
 const GET = async (req, res) => {
   try {
@@ -13,11 +14,15 @@ const GET = async (req, res) => {
     const availabilityTimeoutSetting = await prisma.systemSetting.findUnique({
       where: { key: "availability-timeout" },
     });
-    const availabilityTimeoutMs =
-      Number(availabilityTimeoutSetting.value) * 1000;
-    const cutoff = new Date(now.getTime() - availabilityTimeoutMs);
+    const availabilityTimeoutMs = getAvailabilityTimeoutMs(
+      availabilityTimeoutSetting,
+    );
 
-    const available = user.available && user.lastActive >= cutoff;
+    const { effectiveAvailable } = deriveAvailabilityState({
+      user,
+      now,
+      availabilityTimeoutMs,
+    });
 
     return res.status(200).json({
       id: user.id,
@@ -26,7 +31,7 @@ const GET = async (req, res) => {
       email: user.email,
       activated: user.activated,
       suspended: user.suspended,
-      available,
+      available: effectiveAvailable,
       role: user.role,
       phone_number: user.phone_number,
       postal_address: user.postal_address,

@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useMemo, useState } from "react"
+import { Link } from "react-router-dom"
 import { useAuth } from "@/context/auth-context"
 import { Button } from "@/components/ui/button"
 import {
@@ -11,9 +11,9 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { toast } from "sonner"
+import { ActivationLinkCard } from "@/components/auth/activation-link-card"
 
 export const BusinessRegister = () => {
-  const navigate = useNavigate()
   const { registerBusiness } = useAuth()
   const [form, setForm] = useState({
     business_name: "",
@@ -27,6 +27,7 @@ export const BusinessRegister = () => {
   })
   const [error, setError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [createdAccount, setCreatedAccount] = useState(null)
 
   const updateField = (key) => (event) => {
     setForm((current) => ({
@@ -35,13 +36,32 @@ export const BusinessRegister = () => {
     }))
   }
 
+  const activationHref = useMemo(() => {
+    if (!createdAccount?.resetToken || !createdAccount?.email) return ""
+
+    const params = new URLSearchParams({
+      token: createdAccount.resetToken,
+      email: createdAccount.email,
+      role: "business",
+    })
+
+    return `/activate-account?${params.toString()}`
+  }, [createdAccount])
+
+  const activationUrl = useMemo(() => {
+    if (!activationHref) return ""
+
+    if (typeof window === "undefined") return activationHref
+    return `${window.location.origin}${activationHref}`
+  }, [activationHref])
+
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError("")
     setIsSubmitting(true)
 
     try {
-      await registerBusiness({
+      const created = await registerBusiness({
         business_name: form.business_name,
         owner_name: form.owner_name,
         email: form.email,
@@ -53,15 +73,28 @@ export const BusinessRegister = () => {
           lon: Number(form.lon),
         },
       })
-      toast.success(
-        "Business account created. It must be activated and verified before use."
-      )
-      navigate("/login", { replace: true })
+      setCreatedAccount(created)
+      toast.success("Business account created. Use the activation link to activate it.")
     } catch (err) {
       setError(err.message || "Unable to register business.")
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (createdAccount && activationHref) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-8">
+        <ActivationLinkCard
+          title="Business account created"
+          description="We generated a simulated activation email for this new business account."
+          activationHref={activationHref}
+          activationUrl={activationUrl}
+          expiresAt={createdAccount.expiresAt}
+          role="business"
+        />
+      </div>
+    )
   }
 
   return (
@@ -128,7 +161,7 @@ export const BusinessRegister = () => {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <label htmlFor="phone_number" className="text-sm font-medium">
-                  Phone
+                  Phone number
                 </label>
                 <input
                   id="phone_number"

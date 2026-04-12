@@ -97,6 +97,14 @@ export const Login = () => {
                   placeholder="Enter your password"
                   required
                 />
+                <div className="text-right">
+                  <Link
+                    to="/forgot-password"
+                    className="text-sm text-primary underline underline-offset-4"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
               </div>
 
               {error ? (

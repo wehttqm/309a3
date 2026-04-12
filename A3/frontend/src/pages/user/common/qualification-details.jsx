@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { toast } from "sonner"
 
 function formatDateTime(value) {
   if (!value) return "—"
@@ -65,7 +66,7 @@ export const QualificationDetailsPage = () => {
       setQualification(data)
       setNoteDraft(data.note || "")
     } catch (err) {
-      setError(err.message || "Failed to load qualification.")
+       toast.error(err.message || "Failed to update qualification.")
     } finally {
       setIsLoading(false)
     }
@@ -104,9 +105,9 @@ export const QualificationDetailsPage = () => {
       await qualificationApi.uploadDocument(Number(qualificationId), { file: selectedFile })
       setSelectedFile(null)
       await loadQualification()
-      setSuccess("Qualification document uploaded.")
+      toast.success("Qualification document uploaded.")
     } catch (err) {
-      setError(err.message || "Failed to upload qualification document.")
+      toast.error(err.message || "Failed to upload qualification document.")
     } finally {
       setIsUploadingDocument(false)
     }
@@ -174,7 +175,7 @@ export const QualificationDetailsPage = () => {
         </div>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+      <div className={`grid gap-6 ${isRegular ? "" : "lg:grid-cols-[1.2fr_0.8fr]"}`}>
         <Card>
           <CardHeader>
             <CardTitle>Qualification Details</CardTitle>
@@ -272,72 +273,74 @@ export const QualificationDetailsPage = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>User</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="grid grid-cols-[140px_1fr] gap-3">
-              <span className="text-muted-foreground">Name</span>
-              <span>{qualification.user?.first_name} {qualification.user?.last_name}</span>
-            </div>
-            <div className="grid grid-cols-[140px_1fr] gap-3">
-              <span className="text-muted-foreground">Role</span>
-              <span>{qualification.user?.role || "—"}</span>
-            </div>
-            {qualification.user?.email ? (
+        {!isRegular ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>User</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
               <div className="grid grid-cols-[140px_1fr] gap-3">
-                <span className="text-muted-foreground">Email</span>
-                <span>{qualification.user.email}</span>
+                <span className="text-muted-foreground">Name</span>
+                <span>{qualification.user?.first_name} {qualification.user?.last_name}</span>
               </div>
-            ) : null}
-            {qualification.user?.phone_number ? (
               <div className="grid grid-cols-[140px_1fr] gap-3">
-                <span className="text-muted-foreground">Phone</span>
-                <span>{qualification.user.phone_number}</span>
+                <span className="text-muted-foreground">Role</span>
+                <span>{qualification.user?.role || "—"}</span>
               </div>
-            ) : null}
-            {qualification.user?.postal_address ? (
-              <div className="grid grid-cols-[140px_1fr] gap-3">
-                <span className="text-muted-foreground">Address</span>
-                <span>{qualification.user.postal_address}</span>
-              </div>
-            ) : null}
-            {qualification.user?.birthday ? (
-              <div className="grid grid-cols-[140px_1fr] gap-3">
-                <span className="text-muted-foreground">Birthday</span>
-                <span>{qualification.user.birthday}</span>
-              </div>
-            ) : null}
-            {typeof qualification.user?.activated === "boolean" ? (
-              <div className="grid grid-cols-[140px_1fr] gap-3">
-                <span className="text-muted-foreground">Activated</span>
-                <span>{qualification.user.activated ? "Yes" : "No"}</span>
-              </div>
-            ) : null}
-            {typeof qualification.user?.suspended === "boolean" ? (
-              <div className="grid grid-cols-[140px_1fr] gap-3">
-                <span className="text-muted-foreground">Suspended</span>
-                <span>{qualification.user.suspended ? "Yes" : "No"}</span>
-              </div>
-            ) : null}
-            {qualification.user?.createdAt ? (
-              <div className="grid grid-cols-[140px_1fr] gap-3">
-                <span className="text-muted-foreground">Joined</span>
-                <span>{formatDateTime(qualification.user.createdAt)}</span>
-              </div>
-            ) : null}
-            {qualification.user?.resume ? (
-              <div className="pt-2">
-                <Button asChild type="button" variant="outline">
-                  <a href={resolveApiUrl(qualification.user.resume)} target="_blank" rel="noreferrer">
-                    Open Resume
-                  </a>
-                </Button>
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
+              {qualification.user?.email ? (
+                <div className="grid grid-cols-[140px_1fr] gap-3">
+                  <span className="text-muted-foreground">Email</span>
+                  <span>{qualification.user.email}</span>
+                </div>
+              ) : null}
+              {qualification.user?.phone_number ? (
+                <div className="grid grid-cols-[140px_1fr] gap-3">
+                  <span className="text-muted-foreground">Phone</span>
+                  <span>{qualification.user.phone_number}</span>
+                </div>
+              ) : null}
+              {qualification.user?.postal_address ? (
+                <div className="grid grid-cols-[140px_1fr] gap-3">
+                  <span className="text-muted-foreground">Address</span>
+                  <span>{qualification.user.postal_address}</span>
+                </div>
+              ) : null}
+              {qualification.user?.birthday ? (
+                <div className="grid grid-cols-[140px_1fr] gap-3">
+                  <span className="text-muted-foreground">Birthday</span>
+                  <span>{qualification.user.birthday}</span>
+                </div>
+              ) : null}
+              {typeof qualification.user?.activated === "boolean" ? (
+                <div className="grid grid-cols-[140px_1fr] gap-3">
+                  <span className="text-muted-foreground">Activated</span>
+                  <span>{qualification.user.activated ? "Yes" : "No"}</span>
+                </div>
+              ) : null}
+              {typeof qualification.user?.suspended === "boolean" ? (
+                <div className="grid grid-cols-[140px_1fr] gap-3">
+                  <span className="text-muted-foreground">Suspended</span>
+                  <span>{qualification.user.suspended ? "Yes" : "No"}</span>
+                </div>
+              ) : null}
+              {qualification.user?.createdAt ? (
+                <div className="grid grid-cols-[140px_1fr] gap-3">
+                  <span className="text-muted-foreground">Joined</span>
+                  <span>{formatDateTime(qualification.user.createdAt)}</span>
+                </div>
+              ) : null}
+              {qualification.user?.resume ? (
+                <div className="pt-2">
+                  <Button asChild type="button" variant="outline">
+                    <a href={resolveApiUrl(qualification.user.resume)} target="_blank" rel="noreferrer">
+                      Open Resume
+                    </a>
+                  </Button>
+                </div>
+              ) : null}
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
     </div>
   )

@@ -10,8 +10,10 @@ const POST = async (req, res) => {
   }
 
   try {
+    const normalizedEmail = String(email).trim().toLowerCase();
+
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (!user) {
@@ -23,7 +25,7 @@ const POST = async (req, res) => {
     const resetToken = uuidv4();
 
     const updatedUser = await prisma.user.update({
-      where: { email },
+      where: { email: normalizedEmail },
       data: { expiresAt, resetToken },
     });
 

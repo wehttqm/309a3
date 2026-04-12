@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="DentalLink tooth icon">
+  <defs>
+    <linearGradient id="tooth-bg" x1="10" y1="8" x2="54" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#60a5fa"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#tooth-bg)"/>
+  <path
+    d="M22.75 13C17.96 13 14 16.63 14 22.33c0 4.24 1.8 7.07 3.55 9.8 1.6 2.5 3.12 4.87 3.12 7.95C20.67 45.7 24 51 28.47 51c2.65 0 3.78-2.06 4.46-4.35.74-2.47 1.16-5.15 3.07-5.15s2.33 2.68 3.07 5.15c.68 2.29 1.81 4.35 4.46 4.35 4.47 0 7.8-5.3 7.8-10.92 0-3.08 1.52-5.45 3.12-7.95C56.2 29.4 58 26.57 58 22.33 58 16.63 54.04 13 49.25 13c-2.64 0-5.28.9-7.93 2.73C38.68 13.9 36.03 13 33.39 13c-2.56 0-5.32.9-8.64 2.73C24.1 13.9 23.42 13 22.75 13Z"
+    fill="#fff"
+  />
+</svg>

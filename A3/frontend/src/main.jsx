@@ -1,6 +1,6 @@
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
-import { BrowserRouter, Route, Routes } from "react-router-dom"
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom"
 
 import { AuthProvider } from "@/context/auth-context.jsx"
 import Layout from "@/layouts/layout"
@@ -9,6 +9,9 @@ import { Landing } from "@/pages/public/landing.tsx"
 import { ProtectedRoute } from "./components/protected-route"
 import "./index.css"
 import { Login } from "./pages/auth/login"
+import { ActivateAccountPage } from "./pages/auth/activate-account"
+import { RequestPasswordResetPage } from "./pages/auth/request-password-reset"
+import { ResetPasswordPage } from "./pages/auth/reset-password"
 import { BusinessRegister } from "./pages/user/business/register"
 import { CommonJobs } from "./pages/user/common/jobs"
 import { CommonProfile } from "./pages/user/common/profile"
@@ -24,8 +27,6 @@ import { AdminQualificationsPage } from "@/pages/user/admin/qualifications"
 import { AdminSystemConfigPage } from "@/pages/user/admin/system-config"
 import { BusinessJobsCreate } from "@/pages/user/business/jobs-create"
 import { BusinessProfile } from "@/pages/user/business/profile"
-import { RegularInterests } from "@/pages/user/regular/interests"
-import { RegularInvitations } from "@/pages/user/regular/invitations"
 import { RegularMyJobsPage } from "@/pages/user/regular/my-jobs"
 import { RegularQualificationsPage } from "@/pages/user/regular/qualifications"
 import { QualificationDetailsPage } from "@/pages/user/common/qualification-details"
@@ -57,8 +58,7 @@ createRoot(document.getElementById("root")).render(
             <Route element={<ProtectedRoute allowedRoles={["regular"]} />}>
               <Route path="/profile/regular" element={<RegularProfile />} />
               <Route path="/jobs/browse" element={<RegularJobs />} />
-              <Route path="/my/interests" element={<RegularInterests />} />
-              <Route path="/my/invitations" element={<RegularInvitations />} />
+
               <Route path="/my/jobs" element={<RegularMyJobsPage />} />
               <Route path="/my/qualifications" element={<RegularQualificationsPage />} />
               <Route path="/resume" element={<ResumeUpload/>} />
@@ -82,6 +82,9 @@ createRoot(document.getElementById("root")).render(
           <Route path="/register/regular" element={<RegularRegister />} />
           <Route path="/register/business" element={<BusinessRegister />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/activate-account" element={<ActivateAccountPage />} />
+          <Route path="/forgot-password" element={<RequestPasswordResetPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

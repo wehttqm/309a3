@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useMemo, useState } from "react"
+import { Link } from "react-router-dom"
 import { useAuth } from "@/context/auth-context"
 import { Button } from "@/components/ui/button"
 import {
@@ -11,9 +11,9 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { toast } from "sonner"
+import { ActivationLinkCard } from "@/components/auth/activation-link-card"
 
 export const RegularRegister = () => {
-  const navigate = useNavigate()
   const { registerRegular } = useAuth()
   const [form, setForm] = useState({
     first_name: "",
@@ -26,6 +26,7 @@ export const RegularRegister = () => {
   })
   const [error, setError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [createdAccount, setCreatedAccount] = useState(null)
 
   const updateField = (key) => (event) => {
     setForm((current) => ({
@@ -34,25 +35,59 @@ export const RegularRegister = () => {
     }))
   }
 
+  const activationHref = useMemo(() => {
+    if (!createdAccount?.resetToken || !createdAccount?.email) return ""
+
+    const params = new URLSearchParams({
+      token: createdAccount.resetToken,
+      email: createdAccount.email,
+      role: "regular",
+    })
+
+    return `/activate-account?${params.toString()}`
+  }, [createdAccount])
+
+  const activationUrl = useMemo(() => {
+    if (!activationHref) return ""
+
+    if (typeof window === "undefined") return activationHref
+    return `${window.location.origin}${activationHref}`
+  }, [activationHref])
+
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError("")
     setIsSubmitting(true)
 
     try {
-      await registerRegular({
+      const created = await registerRegular({
         ...form,
         phone_number: form.phone_number || undefined,
         postal_address: form.postal_address || undefined,
         birthday: form.birthday || undefined,
       })
-      toast.success("Account created. Activate the account before logging in.")
-      navigate("/login", { replace: true })
+      setCreatedAccount(created)
+      toast.success("Account created. Use the activation link to activate it.")
     } catch (err) {
       setError(err.message || "Unable to register.")
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (createdAccount && activationHref) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-8">
+        <ActivationLinkCard
+          title="Worker account created"
+          description="We generated a simulated activation email for this new account."
+          activationHref={activationHref}
+          activationUrl={activationUrl}
+          expiresAt={createdAccount.expiresAt}
+          role="regular"
+        />
+      </div>
+    )
   }
 
   return (

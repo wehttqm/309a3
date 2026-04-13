@@ -49,6 +49,10 @@ function BusinessListCard({ business, isAdmin }) {
             <div className="font-medium text-muted-foreground">Phone</div>
             <div>{business.phone_number || "—"}</div>
           </div>
+          <div>
+            <div className="font-medium text-muted-foreground">Location</div>
+            <div>{formatLocation(business.location)}</div>
+          </div>
         </div>
 
         <div>

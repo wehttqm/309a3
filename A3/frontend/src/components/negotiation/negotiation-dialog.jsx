@@ -5,6 +5,7 @@ import { getUserDisplayName } from "@/lib/user-status"
 import { UserAvatar } from "@/components/user-avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { LoadingState } from "@/components/ui/loading-state"
 import { Input } from "@/components/ui/input"
 import {
   Dialog,
@@ -334,9 +335,7 @@ export function NegotiationDialog() {
         ) : null}
 
         {loading ? (
-          <Card>
-            <CardContent className="py-10 text-sm text-muted-foreground">Loading negotiation...</CardContent>
-          </Card>
+          <LoadingState title="Loading negotiation" description="Connecting the live window, presence state, messages, and decision history." compact />
         ) : null}
 
         {!loading && !negotiation && history.length === 0 ? (
@@ -348,7 +347,7 @@ export function NegotiationDialog() {
         ) : null}
 
         {!loading && negotiation ? (
-          <div className="grid gap-6 lg:grid-cols-[1.25fr_0.9fr]">
+          <div className="stagger-enter grid gap-6 lg:grid-cols-[1.25fr_0.9fr]">
             <Card>
               <CardHeader>
                 <CardTitle>Conversation</CardTitle>

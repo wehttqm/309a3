@@ -3,6 +3,7 @@ import { notify } from "@/lib/notify"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { InlineLoadingState } from "@/components/ui/loading-state"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { adminApi } from "@/lib/api/client"
@@ -127,9 +128,7 @@ function SettingCard({
           ) : null}
 
           {isLoading ? (
-            <div className="rounded-2xl border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-              Loading current value...
-            </div>
+            <div className="rounded-2xl border border-border bg-muted/40 px-4 py-3"><InlineLoadingState label="Loading current value" /></div>
           ) : successValue !== null ? (
             <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
               Current value: <span className="font-medium">{successValue}</span>
@@ -147,7 +146,7 @@ function SettingCard({
 
 export const AdminSystemConfigPage = () => {
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10">
+    <div className="page-enter mx-auto max-w-5xl px-6 py-10">
       <div className="mb-8 flex items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">System Configuration</h1>

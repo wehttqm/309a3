@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom"
 import { positionTypeApi, qualificationApi, resolveApiUrl } from "@/lib/api/client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { InlineLoadingState } from "@/components/ui/loading-state"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Dialog,
@@ -235,7 +236,7 @@ export const RegularQualificationsPage = () => {
   const rejectedCount = countByStatus(qualifications, "rejected")
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10">
+    <div className="page-enter mx-auto max-w-5xl px-6 py-10">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Qualifications</h1>
@@ -277,7 +278,7 @@ export const RegularQualificationsPage = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {isLoadingQualifications ? (
-              <div className="text-sm text-muted-foreground">Loading your qualifications...</div>
+              <InlineLoadingState label="Loading your qualifications" />
             ) : (
               <div className="space-y-3">
                 {pendingQualifications.map((qualification) => {
@@ -326,7 +327,7 @@ export const RegularQualificationsPage = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {isLoadingQualifications ? (
-            <div className="text-sm text-muted-foreground">Loading your qualifications...</div>
+            <InlineLoadingState label="Loading your qualifications" />
           ) : qualifications.length === 0 ? (
             <div className="rounded-xl border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">
               You have not added any qualifications yet.

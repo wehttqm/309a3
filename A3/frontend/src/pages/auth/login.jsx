@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
+import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import { useAuth } from "@/context/auth-context"
 import {
   Card,
@@ -47,7 +48,7 @@ export const Login = () => {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
+    <div className="page-enter flex min-h-screen items-center justify-center bg-muted/30 px-4">
       <div className="flex">
         <div className="p-2 pt-1">
           <div
@@ -118,7 +119,7 @@ export const Login = () => {
                 className="w-full"
                 disabled={isSubmitting || isLoading}
               >
-                {isSubmitting ? "Logging in..." : "Log in"}
+                {isSubmitting ? (<><LoadingSpinner className="text-primary-foreground" /> Logging in...</>) : "Log in"}
               </Button>
             </form>
           </CardContent>

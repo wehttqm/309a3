@@ -13,6 +13,7 @@ import { RegularDashboard } from "@/components/dashboard/regular-dashboard"
 import { useAuth } from "@/context/auth-context"
 import { ArrowUpRight, ChevronDown } from "lucide-react"
 import { useState } from "react"
+import { LoadingState } from "@/components/ui/loading-state"
 import { useNavigate } from "react-router-dom"
 
 const steps = [
@@ -81,8 +82,11 @@ export const Landing = () => {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center text-muted-foreground">
-        Loading...
+      <div className="page-enter mx-auto max-w-5xl px-6 py-12">
+        <LoadingState
+          title="Preparing your workspace"
+          description="We are checking your role and loading the right dashboard experience."
+        />
       </div>
     )
   }

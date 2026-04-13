@@ -7,6 +7,7 @@ import { useAuth } from "@/context/auth-context"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { LoadingState } from "@/components/ui/loading-state"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { notify } from "@/lib/notify"
@@ -134,7 +135,7 @@ export const QualificationDetailsPage = () => {
   }
 
   if (isLoading) {
-    return <div className="py-16 text-center text-sm text-muted-foreground">Loading qualification...</div>
+    return <div className="mx-auto max-w-5xl px-6 py-12"><LoadingState title="Loading qualification" description="Retrieving the full qualification record, document links, and review details." compact /></div>
   }
 
   if (!qualification) {
@@ -145,7 +146,7 @@ export const QualificationDetailsPage = () => {
   const isAdmin = user?.role === "admin"
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10">
+    <div className="page-enter mx-auto max-w-5xl px-6 py-10">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Qualification Request</h1>

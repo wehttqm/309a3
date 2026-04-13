@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
+import { DashboardSkeleton } from "@/components/ui/app-skeletons"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -225,11 +226,7 @@ export function AdminDashboard() {
   }
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center text-muted-foreground">
-        Loading dashboard...
-      </div>
-    )
+    return <DashboardSkeleton cards="4" />
   }
 
   if (error) {

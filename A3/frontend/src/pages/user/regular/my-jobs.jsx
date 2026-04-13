@@ -8,6 +8,9 @@ import { apiClient } from "@/lib/api/client"
 import { getNegotiationStartErrorMessage, getRegularNegotiationBlockReason } from "@/lib/negotiation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { InlineLoadingState } from "@/components/ui/loading-state"
+import { JobCardSkeleton } from "@/components/ui/app-skeletons"
+import { Skeleton } from "@/components/ui/skeleton"
 import { UserAvatar } from "@/components/user-avatar"
 import { deriveUserAvatarStatus, formatAvatarStatusLabel } from "@/lib/user-status"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -474,7 +477,7 @@ export const RegularMyJobsPage = () => {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-10">
+    <div className="page-enter mx-auto max-w-6xl px-6 py-10">
       <div className="mb-8 flex items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Work Activity</h1>
@@ -601,7 +604,14 @@ export const RegularMyJobsPage = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {isLoadingInvitations ? (
-                <div className="text-sm text-muted-foreground">Loading invitations...</div>
+                <div className="space-y-4">
+                  <InlineLoadingState label="Loading invitations" />
+                  <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      <JobCardSkeleton key={index} />
+                    ))}
+                  </div>
+                </div>
               ) : invitationItems.length === 0 ? (
                 <EmptyState>No invitations match the current filters.</EmptyState>
               ) : (
@@ -668,7 +678,14 @@ export const RegularMyJobsPage = () => {
             </div>
 
             {isLoadingInterests ? (
-              <div className="text-sm text-muted-foreground">Loading interested jobs...</div>
+              <div className="space-y-4">
+                <InlineLoadingState label="Loading interested jobs" />
+                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <JobCardSkeleton key={index} />
+                  ))}
+                </div>
+              </div>
             ) : interestItems.length === 0 ? (
               <EmptyState>No interested jobs match the current filters.</EmptyState>
             ) : (
@@ -752,7 +769,36 @@ export const RegularMyJobsPage = () => {
             </div>
 
             {isLoadingCommittedJobs ? (
-              <div className="text-sm text-muted-foreground">Loading job history...</div>
+              <div className="space-y-4">
+                <InlineLoadingState label="Loading job history" />
+                <div className="space-y-3">
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="space-y-4 rounded-2xl border px-4 py-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="h-10 w-10 rounded-full" />
+                          <div className="space-y-2">
+                            <Skeleton className="h-4 w-36" />
+                            <Skeleton className="h-3 w-28" />
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Skeleton className="h-6 w-20 rounded-full" />
+                          <Skeleton className="h-6 w-20 rounded-full" />
+                        </div>
+                      </div>
+                      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                        {Array.from({ length: 4 }).map((__, metricIndex) => (
+                          <div key={metricIndex} className="space-y-2 rounded-xl bg-muted/30 p-3">
+                            <Skeleton className="h-3 w-16" />
+                            <Skeleton className="h-4 w-24" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             ) : committedJobsWithState.length === 0 ? (
               <EmptyState>No committed jobs match the current filters.</EmptyState>
             ) : (

@@ -91,7 +91,7 @@ export default function ResumeUpload() {
   }
 
   return (
-    <div className="mx-auto max-w-200 space-y-8 px-6 py-10">
+    <div className="page-enter mx-auto max-w-200 space-y-8 px-6 py-10">
       <div className="mb-8 flex items-center justify-between border-b pb-6">
         <h1 className="text-3xl font-bold">Resume Upload</h1>
       </div>

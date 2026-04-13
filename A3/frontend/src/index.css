@@ -94,3 +94,70 @@
     @apply font-sans;
     }
 }
+
+body {
+  min-height: 100vh;
+  background-image:
+    radial-gradient(circle at top, color-mix(in oklab, var(--primary) 11%, transparent) 0%, transparent 34%),
+    linear-gradient(180deg, color-mix(in oklab, var(--background) 92%, white 8%) 0%, var(--background) 100%);
+  background-attachment: fixed;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+@keyframes page-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes surface-fade {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.page-enter {
+  animation: page-fade-up 280ms ease-out both;
+}
+
+.surface-enter {
+  animation: surface-fade 220ms ease-out both;
+}
+
+.stagger-enter > * {
+  animation: surface-fade 220ms ease-out both;
+}
+
+.stagger-enter > *:nth-child(1) { animation-delay: 40ms; }
+.stagger-enter > *:nth-child(2) { animation-delay: 80ms; }
+.stagger-enter > *:nth-child(3) { animation-delay: 120ms; }
+.stagger-enter > *:nth-child(4) { animation-delay: 160ms; }
+.stagger-enter > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-enter > *:nth-child(6) { animation-delay: 240ms; }
+
+.cn-toast {
+  backdrop-filter: blur(12px);
+  box-shadow: 0 18px 50px color-mix(in oklab, var(--foreground) 8%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react"
 import { apiClient } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
+import { InlineLoadingState } from "@/components/ui/loading-state"
+import { CandidateRowSkeleton } from "@/components/ui/app-skeletons"
 import { useSocket } from "@/context/socket-context"
 import { useAuth } from "@/context/auth-context"
 import { canReportNoShow } from "@/components/jobs/job-utils"
@@ -267,7 +269,14 @@ export function JobCandidatesDialog({ open, onOpenChange, job, onDataChanged, on
                 <CardTitle className="text-base">Discoverable Candidates</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {isLoading ? <p className="text-sm text-muted-foreground">Loading...</p> : null}
+                {isLoading ? (
+                  <div className="space-y-3">
+                    <InlineLoadingState label="Loading candidates" />
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      <CandidateRowSkeleton key={index} />
+                    ))}
+                  </div>
+                ) : null}
                 {!isLoading && candidates.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No candidates found.</p>
                 ) : null}
@@ -311,7 +320,14 @@ export function JobCandidatesDialog({ open, onOpenChange, job, onDataChanged, on
                 <CardTitle className="text-base">Interested Candidates</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {isLoading ? <p className="text-sm text-muted-foreground">Loading...</p> : null}
+                {isLoading ? (
+                  <div className="space-y-3">
+                    <InlineLoadingState label="Loading candidates" />
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      <CandidateRowSkeleton key={index} />
+                    ))}
+                  </div>
+                ) : null}
                 {!isLoading && interests.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No candidate has expressed interest yet.</p>
                 ) : null}

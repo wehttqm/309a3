@@ -17,6 +17,8 @@ import { JobCard } from "@/components/jobs/job-card"
 import { JobFormDialog } from "@/components/jobs/job-form-dialog"
 import { JobCandidatesDialog } from "@/components/jobs/job-candidates-dialog"
 import { StartNegotiationDialog } from "@/components/negotiation/start-negotiation-dialog"
+import { LoadingState } from "@/components/ui/loading-state"
+import { JobCardSkeleton } from "@/components/ui/app-skeletons"
 import { useSocket } from "@/context/socket-context"
 import { useAuth } from "@/context/auth-context"
 import { canReportNoShow } from "@/components/jobs/job-utils"
@@ -766,8 +768,8 @@ export function JobsPage({ role, mode, startCreateOpen = false }) {
   const showStandalonePageSize = !config.supportsFilters
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-6 py-10">
-      <div className="flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-end sm:justify-between">
+    <div className="page-enter mx-auto max-w-6xl space-y-6 px-6 py-10">
+      <div className="surface-enter flex flex-col gap-4 border-b border-border/70 pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{config.title}</h1>
           <p className="mt-2 text-muted-foreground">{config.description}</p>
@@ -823,10 +825,19 @@ export function JobsPage({ role, mode, startCreateOpen = false }) {
         </div>
       ) : null}
 
-      {isLoading ? (
-        <Card>
-          <CardContent className="py-10 text-sm text-muted-foreground">Loading...</CardContent>
-        </Card>
+      {isLoading && items.length === 0 ? (
+        <div className="space-y-4">
+          <LoadingState
+            title="Loading jobs"
+            description="We are refreshing filters, job details, and availability-aware actions for this page."
+            compact
+          />
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <JobCardSkeleton key={index} />
+            ))}
+          </div>
+        </div>
       ) : null}
 
       {!isLoading && items.length === 0 ? (
@@ -840,7 +851,7 @@ export function JobsPage({ role, mode, startCreateOpen = false }) {
         </Card>
       ) : null}
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <div className="stagger-enter grid gap-6 md:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => {
           const job = item.job
             ? { ...item.job, interest_id: item.interest_id, mutual: item.mutual }

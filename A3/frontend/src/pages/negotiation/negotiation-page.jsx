@@ -10,6 +10,7 @@ import { StartNegotiationDialog } from "@/components/negotiation/start-negotiati
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { NegotiationPageSkeleton } from "@/components/ui/app-skeletons"
 
 function formatDateTime(value) {
   if (!value) return "—"
@@ -154,6 +155,38 @@ function PossibleNegotiationCard({ item, onStart, isBusy }) {
   )
 }
 
+function NegotiationPageSkeletonSection({ variant }) {
+  const count = variant === "history" ? 2 : 3
+
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: count }).map((_, index) => (
+        <div key={index} className="rounded-2xl border border-border/60 bg-muted/10 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-2">
+              <div className="h-4 w-40 animate-pulse rounded bg-muted" />
+              <div className="h-3 w-28 animate-pulse rounded bg-muted" />
+            </div>
+            <div className="h-6 w-20 animate-pulse rounded-full bg-muted" />
+          </div>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            {Array.from({ length: 2 }).map((__, rowIndex) => (
+              <div key={rowIndex} className="flex items-center gap-3 rounded-xl border border-border/50 bg-muted/20 p-3">
+                <div className="h-11 w-11 animate-pulse rounded-full bg-muted" />
+                <div className="space-y-2">
+                  <div className="h-4 w-28 animate-pulse rounded bg-muted" />
+                  <div className="h-3 w-20 animate-pulse rounded bg-muted" />
+                </div>
+              </div>
+            ))}
+          </div>
+          {variant === "possible" ? <div className="mt-3 h-10 w-40 animate-pulse rounded-md bg-muted" /> : null}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function NegotiationPage() {
   const { user, refreshUser } = useAuth()
   const { openNegotiation, hasActiveNegotiation } = useSocket()
@@ -277,12 +310,16 @@ export function NegotiationPage() {
     }
   }
 
+  if (loading && !current && history.length === 0 && possible.length === 0) {
+    return <NegotiationPageSkeleton />
+  }
+
   if (!["regular", "business"].includes(user?.role)) {
     return <div className="p-10 text-center text-muted-foreground">Negotiations are only available for regular users and businesses.</div>
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-10">
+    <div className="page-enter mx-auto max-w-6xl px-6 py-10">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Negotiations</h1>
@@ -293,7 +330,7 @@ export function NegotiationPage() {
 
       {error ? <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</div> : null}
 
-      <div className="grid gap-6">
+      <div className="stagger-enter grid gap-6">
         <CurrentNegotiationCard negotiation={current} onOpen={openNegotiation} />
 
         <Card>
@@ -302,7 +339,7 @@ export function NegotiationPage() {
             <CardDescription>{possibleCountLabel}. These matches already have mutual interest and can move into the exclusive negotiation window.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {loading ? <p className="text-sm text-muted-foreground">Loading possible negotiations...</p> : null}
+            {loading ? <NegotiationPageSkeletonSection variant="possible" /> : null}
             {!loading && possible.length === 0 ? <p className="text-sm text-muted-foreground">No mutual-interest matches are ready to negotiate right now.</p> : null}
             {!loading && possible.map((item) => (
               <PossibleNegotiationCard
@@ -321,7 +358,7 @@ export function NegotiationPage() {
             <CardDescription>Historic negotiations, including successful and failed outcomes.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {loading ? <p className="text-sm text-muted-foreground">Loading previous negotiations...</p> : null}
+            {loading ? <NegotiationPageSkeletonSection variant="history" /> : null}
             {!loading && history.length === 0 ? <p className="text-sm text-muted-foreground">No previous negotiations yet.</p> : null}
             {!loading && history.map((item) => <PreviousNegotiationCard key={item.id} item={item} />)}
           </CardContent>

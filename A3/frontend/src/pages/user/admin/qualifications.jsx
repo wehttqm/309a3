@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react"
 import { adminApi, resolveApiUrl } from "@/lib/api/client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { LoadingState } from "@/components/ui/loading-state"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { AdminHelperCard } from "@/components/admin/admin-helper-card"
@@ -130,7 +131,7 @@ export const AdminQualificationsPage = () => {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-10">
+    <div className="page-enter mx-auto max-w-7xl px-6 py-10">
       <div className="mb-8 flex items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Qualification Review</h1>
@@ -188,7 +189,7 @@ export const AdminQualificationsPage = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {isLoading ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">Loading qualifications...</div>
+            <LoadingState title="Loading qualifications" description="Fetching qualification requests that need review." compact />
           ) : data.results.length === 0 ? (
             <div className="py-8 text-center text-sm text-muted-foreground">No qualifications need admin attention right now. This usually means the review queue is clear.</div>
           ) : (

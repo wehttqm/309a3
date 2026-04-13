@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { UserAvatar } from "@/components/user-avatar"
+import { LoadingState } from "@/components/ui/loading-state"
+import { Skeleton } from "@/components/ui/skeleton"
+import { PageShell } from "@/components/layout/page-shell"
 
 function formatLocation(location) {
   if (!location) return "—"
@@ -18,7 +21,7 @@ function formatLocation(location) {
 
 function BusinessListCard({ business, isAdmin }) {
   return (
-    <Card className="h-full overflow-hidden">
+    <Card className="h-full overflow-hidden border-border/70 bg-card/90 shadow-sm backdrop-blur-sm transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md">
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-4">
@@ -81,6 +84,34 @@ function BusinessListCard({ business, isAdmin }) {
   )
 }
 
+function BusinessCardSkeleton() {
+  return (
+    <Card className="h-full overflow-hidden border-border/70 bg-card/80 shadow-sm backdrop-blur-sm">
+      <CardHeader>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex min-w-0 items-start gap-4">
+            <Skeleton className="h-14 w-14 rounded-full" />
+            <div className="min-w-0 space-y-2">
+              <Skeleton className="h-5 w-44" />
+              <Skeleton className="h-4 w-56" />
+            </div>
+          </div>
+          <Skeleton className="h-6 w-20 rounded-full" />
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-11/12" />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+        <Skeleton className="h-14 w-full" />
+      </CardContent>
+    </Card>
+  )
+}
+
 export function Businesses() {
   const { user } = useAuth()
   const isAdmin = user?.role === "admin"
@@ -107,11 +138,7 @@ export function Businesses() {
       setError("")
 
       try {
-        const query = {
-          page,
-          limit,
-        }
-
+        const query = { page, limit }
         if (keyword.trim()) query.keyword = keyword.trim()
         if (sort) query.sort = sort
         if (sort) query.order = order
@@ -165,24 +192,22 @@ export function Businesses() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-10">
-      <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Businesses</h1>
-          <p className="mt-2 text-muted-foreground">
-            {isAdmin
-              ? "Browse businesses with admin-only details, including owner name, activation, and verification state."
-              : "Browse businesses using the platform. Search by name, email, address, or phone."}
-          </p>
-        </div>
-        {!isAdmin ? (
+    <PageShell
+      title="Businesses"
+      description={
+        isAdmin
+          ? "Browse businesses with admin-only details, including owner name, activation, and verification state."
+          : "Browse businesses using the platform. Search by name, email, address, or phone."
+      }
+      actions={
+        !isAdmin ? (
           <Button asChild variant="outline">
             <Link to="/register/business">Register Your Business</Link>
           </Button>
-        ) : null}
-      </div>
-
-      <Card className="mb-6">
+        ) : null
+      }
+    >
+      <Card className="surface-enter border-border/70 bg-card/85 shadow-sm backdrop-blur-sm">
         <CardContent className="pt-6">
           <form className="grid gap-4 md:grid-cols-5" onSubmit={onSearchSubmit}>
             <div className="md:col-span-2">
@@ -293,34 +318,42 @@ export function Businesses() {
         </CardContent>
       </Card>
 
-      <div className="mb-4 flex items-center justify-between text-sm text-muted-foreground">
-        <span>{isLoading ? "Loading businesses..." : `${count} business${count === 1 ? "" : "es"} found`}</span>
+      <div className="surface-enter flex items-center justify-between text-sm text-muted-foreground">
+        <span>{isLoading ? "Refreshing business directory..." : `${count} business${count === 1 ? "" : "es"} found`}</span>
         <span>Page {page} of {totalPages}</span>
       </div>
 
       {error ? (
-        <Card>
-          <CardContent className="py-6 text-sm text-destructive">{error}</CardContent>
+        <Card className="border-destructive/20 bg-destructive/10 text-destructive shadow-none">
+          <CardContent className="py-6 text-sm">{error}</CardContent>
         </Card>
       ) : null}
 
+      {!error && isLoading ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: Math.min(limit, 6) }).map((_, index) => (
+            <BusinessCardSkeleton key={index} />
+          ))}
+        </div>
+      ) : null}
+
       {!error && !isLoading && businesses.length === 0 ? (
-        <Card>
+        <Card className="surface-enter">
           <CardContent className="py-8 text-center text-muted-foreground">
             No businesses matched your current filters.
           </CardContent>
         </Card>
       ) : null}
 
-      {!error && businesses.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {!error && !isLoading && businesses.length > 0 ? (
+        <div className="stagger-enter grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {businesses.map((business) => (
             <BusinessListCard key={business.id} business={business} isAdmin={isAdmin} />
           ))}
         </div>
       ) : null}
 
-      <div className="mt-8 flex items-center justify-between gap-4">
+      <div className="surface-enter mt-2 flex items-center justify-between gap-4">
         <Button
           variant="outline"
           disabled={page <= 1 || isLoading}
@@ -336,6 +369,6 @@ export function Businesses() {
           Next
         </Button>
       </div>
-    </div>
+    </PageShell>
   )
 }

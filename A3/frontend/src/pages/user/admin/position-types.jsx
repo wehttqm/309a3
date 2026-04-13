@@ -4,6 +4,7 @@ import { adminApi } from "@/lib/api/client"
 import { AdminHelperCard } from "@/components/admin/admin-helper-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { LoadingState } from "@/components/ui/loading-state"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Dialog,
@@ -180,7 +181,7 @@ export const AdminPositionTypesPage = () => {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-10">
+    <div className="page-enter mx-auto max-w-7xl px-6 py-10">
       <div className="mb-8 flex items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Manage Position Types</h1>
@@ -265,7 +266,7 @@ export const AdminPositionTypesPage = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {isLoading ? (
-            <div className="py-8 text-center text-sm text-muted-foreground">Loading position types...</div>
+            <LoadingState title="Loading position types" description="Retrieving position definitions and qualification counts." compact />
           ) : data.results.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-8 text-center text-sm text-muted-foreground">
               <p>No position types matched the current filters. Reset the filters or create a new type if the catalog is missing a role.</p>

@@ -17,7 +17,7 @@ export function NotificationsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-10">
+    <div className="page-enter mx-auto max-w-3xl px-6 py-10">
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>

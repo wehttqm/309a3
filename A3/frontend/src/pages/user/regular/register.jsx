@@ -2,6 +2,7 @@ import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
 import { useAuth } from "@/context/auth-context"
 import { Button } from "@/components/ui/button"
+import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import {
   Card,
   CardContent,
@@ -77,7 +78,7 @@ export const RegularRegister = () => {
 
   if (createdAccount && activationHref) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4 py-8">
+      <div className="page-enter flex min-h-screen items-center justify-center bg-muted/30 px-4 py-8">
         <ActivationLinkCard
           title="Worker account created"
           description="We generated a simulated activation email for this new account."
@@ -198,7 +199,7 @@ export const RegularRegister = () => {
             ) : null}
 
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Creating account..." : "Create worker account"}
+              {isSubmitting ? (<><LoadingSpinner className="text-primary-foreground" /> Creating account...</>) : "Create worker account"}
             </Button>
           </form>
         </CardContent>

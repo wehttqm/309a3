@@ -3,6 +3,7 @@ import { useAuth } from "@/context/auth-context"
 import { getUserDisplayName } from "@/lib/user-status"
 import { UserAvatar } from "@/components/user-avatar"
 import { Button } from "@/components/ui/button"
+import { LoadingSpinner } from "@/components/ui/loading-spinner"
 import {
   Dialog,
   DialogContent,
@@ -138,7 +139,7 @@ export function OpenNegotiationDialog({
             Cancel
           </Button>
           <Button onClick={onConfirm} disabled={isLoading || !negotiation}>
-            {isLoading ? "Opening..." : "Open window"}
+            {isLoading ? (<><LoadingSpinner className="text-primary-foreground" /> Opening...</>) : "Open window"}
           </Button>
         </DialogFooter>
       </DialogContent>

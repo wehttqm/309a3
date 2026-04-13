@@ -79,6 +79,12 @@ function BusinessListCard({ business, isAdmin }) {
             </div>
           </>
         ) : null}
+
+        <div className="pt-1">
+          <Button asChild className="w-full" variant="outline">
+            <Link to={`/businesses/${business.id}`}>View Profile</Link>
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )

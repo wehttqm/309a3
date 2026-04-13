@@ -7,6 +7,7 @@ import { AuthProvider } from "@/context/auth-context.jsx"
 import { SocketProvider } from "@/context/socket-context.jsx"
 import Layout from "@/layouts/layout"
 import { Businesses } from "@/pages/public/businesses.jsx"
+import { BusinessProfilePage } from "@/pages/public/business-profile.jsx"
 import { Landing } from "@/pages/public/landing.tsx"
 import { ProtectedRoute } from "./components/protected-route"
 import "./index.css"
@@ -56,6 +57,7 @@ createRoot(document.getElementById("root")).render(
               <Route element={<Layout />}>
                 <Route path="/" element={<Landing />} />
                 <Route path="/businesses" element={<Businesses />} />
+                <Route path="/businesses/:businessId" element={<BusinessProfilePage />} />
                 <Route path="/jobs" element={<CommonJobs />} />
 
                 <Route element={<ProtectedRoute />}>

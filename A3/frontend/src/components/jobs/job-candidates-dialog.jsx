@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useState } from "react"
-import { apiClient } from "@/lib/api/client"
+import { Mail, Phone } from "lucide-react"
+
+import { apiClient, resolveApiUrl } from "@/lib/api/client"
 import { Button } from "@/components/ui/button"
-import { InlineLoadingState } from "@/components/ui/loading-state"
+import { InlineLoadingState, LoadingState } from "@/components/ui/loading-state"
 import { CandidateRowSkeleton } from "@/components/ui/app-skeletons"
 import { useSocket } from "@/context/socket-context"
 import { useAuth } from "@/context/auth-context"
 import { canReportNoShow } from "@/components/jobs/job-utils"
+import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { UserAvatar } from "@/components/user-avatar"
 import { StartNegotiationDialog } from "@/components/negotiation/start-negotiation-dialog"
@@ -87,6 +90,191 @@ function CandidateRow({ candidate, subtitle, children }) {
   )
 }
 
+function DetailRow({ icon: Icon, label, value }) {
+  if (!value) return null
+
+  return (
+    <div className="flex items-start gap-3 rounded-xl border border-border/60 bg-background/70 px-4 py-3">
+      <div className="mt-0.5 rounded-lg bg-primary/8 p-2 text-primary">
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0 space-y-1">
+        <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</div>
+        <div className="break-words text-sm text-foreground">{value}</div>
+      </div>
+    </div>
+  )
+}
+
+function CandidateDetailsDialog({ open, onOpenChange, jobId, candidate }) {
+  const [details, setDetails] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    let ignore = false
+
+    async function loadDetails() {
+      if (!open || !jobId || !candidate?.id) return
+      setIsLoading(true)
+      setError("")
+
+      try {
+        const data = await apiClient.getJobsJobIdCandidatesUserId({
+          pathParams: { jobId, userId: candidate.id },
+        })
+
+        if (!ignore) {
+          setDetails(data)
+        }
+      } catch (err) {
+        if (!ignore) {
+          setDetails(null)
+          setError(err.message || "Unable to load candidate details.")
+        }
+      } finally {
+        if (!ignore) setIsLoading(false)
+      }
+    }
+
+    if (open) {
+      loadDetails()
+    } else {
+      setDetails(null)
+      setError("")
+      setIsLoading(false)
+    }
+
+    return () => {
+      ignore = true
+    }
+  }, [open, jobId, candidate?.id])
+
+  const person = details?.user || candidate
+  const qualification = details?.user?.qualification
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>Candidate Details</DialogTitle>
+          <DialogDescription>
+            Review qualification note, qualification document, resume, and biography before inviting or negotiating.
+          </DialogDescription>
+        </DialogHeader>
+
+        {isLoading ? <LoadingState compact card={false} title="Loading candidate details" /> : null}
+
+        {!isLoading && error ? (
+          <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </div>
+        ) : null}
+
+        {!isLoading && !error && person ? (
+          <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+            <Card className="border-border/70 bg-card/90 shadow-sm backdrop-blur-sm">
+              <CardHeader>
+                <div className="flex items-start gap-4">
+                  <UserAvatar
+                    user={{ ...person, role: "regular" }}
+                    className="h-16 w-16 border"
+                    fallbackClassName="text-lg"
+                    showStatus={false}
+                  />
+                  <div className="min-w-0 space-y-2">
+                    <div>
+                      <CardTitle className="text-xl">
+                        {person.first_name} {person.last_name}
+                      </CardTitle>
+                      <DialogDescription className="mt-1">
+                        Candidate profile for this job posting.
+                      </DialogDescription>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="secondary">Candidate</Badge>
+                      {qualification ? (
+                        <Badge variant="outline">Qualification on file</Badge>
+                      ) : (
+                        <Badge variant="outline">No qualification details</Badge>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <DetailRow icon={Mail} label="Email" value={person.email} />
+                <DetailRow icon={Phone} label="Phone" value={person.phone_number} />
+                <div className="rounded-xl border border-border/60 bg-background/70 px-4 py-3">
+                  <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Biography</div>
+                  <p className="text-sm leading-7 text-muted-foreground">
+                    {person.biography || "This candidate has not added a biography yet."}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-border/70 bg-card/90 shadow-sm backdrop-blur-sm">
+              <CardHeader>
+                <CardTitle className="text-lg">Qualification & Documents</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="rounded-xl border border-border/60 bg-background/70 px-4 py-3">
+                  <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Qualification Note</div>
+                  <p className="text-sm leading-7 text-muted-foreground">
+                    {qualification?.note || "No qualification note was provided."}
+                  </p>
+                </div>
+
+                <div className="grid gap-3">
+                  <div className="flex items-center justify-between rounded-xl border border-border/60 bg-background/70 px-4 py-3">
+                    <div className="space-y-1">
+                      <div className="text-sm font-medium text-foreground">Qualification Document</div>
+                      <div className="text-xs text-muted-foreground">Review the uploaded qualification proof for this position type.</div>
+                    </div>
+                    {qualification?.document ? (
+                      <Button asChild size="sm" variant="outline">
+                        <a href={resolveApiUrl(qualification.document)} target="_blank" rel="noreferrer">Open</a>
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Not uploaded</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-xl border border-border/60 bg-background/70 px-4 py-3">
+                    <div className="space-y-1">
+                      <div className="text-sm font-medium text-foreground">Resume</div>
+                      <div className="text-xs text-muted-foreground">Open the candidate's uploaded resume if available.</div>
+                    </div>
+                    {person.resume ? (
+                      <Button asChild size="sm" variant="outline">
+                        <a href={resolveApiUrl(person.resume)} target="_blank" rel="noreferrer">Open</a>
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Not uploaded</span>
+                    )}
+                  </div>
+                </div>
+
+                {details?.job ? (
+                  <div className="rounded-xl border border-border/60 bg-background/70 px-4 py-3 text-sm text-muted-foreground">
+                    <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Job Context</div>
+                    <div className="font-medium text-foreground">{details.job.position_type?.name || `Job #${details.job.id}`}</div>
+                    <div className="mt-1">Status: {details.job.status}</div>
+                    <div>
+                      Shift: {new Date(details.job.start_time).toLocaleString()} – {new Date(details.job.end_time).toLocaleString()}
+                    </div>
+                  </div>
+                ) : null}
+              </CardContent>
+            </Card>
+          </div>
+        ) : null}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export function JobCandidatesDialog({ open, onOpenChange, job, onDataChanged, onReportNoShow }) {
   const { user } = useAuth()
   const { openNegotiation } = useSocket()
@@ -104,6 +292,7 @@ export function JobCandidatesDialog({ open, onOpenChange, job, onDataChanged, on
   const [busyKey, setBusyKey] = useState("")
   const [error, setError] = useState("")
   const [pendingNegotiation, setPendingNegotiation] = useState(null)
+  const [selectedCandidate, setSelectedCandidate] = useState(null)
 
   const isJobOpen = job?.status === "open"
   const canReportNoShowForJob = canReportNoShow(job)
@@ -228,6 +417,9 @@ export function JobCandidatesDialog({ open, onOpenChange, job, onDataChanged, on
     }
   }
 
+  const openCandidateDetails = (candidate) => {
+    setSelectedCandidate(candidate)
+  }
 
   return (
     <>
@@ -239,8 +431,8 @@ export function JobCandidatesDialog({ open, onOpenChange, job, onDataChanged, on
                 <DialogTitle>{isJobOpen ? "Manage Candidates" : "Candidate History"}</DialogTitle>
                 <DialogDescription>
                   {isJobOpen
-                    ? "Review discoverable candidates, manage invitations, and start negotiation once interest is mutual."
-                    : "This job is no longer open. You can review prior candidate interest, but invitations and new negotiations are disabled."}
+                    ? "Review discoverable candidates, inspect candidate details, manage invitations, and start negotiation once interest is mutual."
+                    : "This job is no longer open. You can review prior candidate interest and candidate details, but invitations and new negotiations are disabled."}
                 </DialogDescription>
               </div>
               {canReportNoShowForJob ? (
@@ -286,6 +478,9 @@ export function JobCandidatesDialog({ open, onOpenChange, job, onDataChanged, on
                     candidate={candidate}
                     subtitle={candidate.invited ? "Already invited" : "Not invited"}
                   >
+                    <Button variant="outline" onClick={() => openCandidateDetails(candidate)}>
+                      View Details
+                    </Button>
                     <Button
                       variant={candidate.invited ? "outline" : "default"}
                       disabled={!isJobOpen || busyKey === `invite-${candidate.id}`}
@@ -337,6 +532,9 @@ export function JobCandidatesDialog({ open, onOpenChange, job, onDataChanged, on
                     candidate={interest.user}
                     subtitle={interest.mutual ? "Mutual interest" : "Candidate interested"}
                   >
+                    <Button variant="outline" onClick={() => openCandidateDetails(interest.user)}>
+                      View Details
+                    </Button>
                     {interest.mutual ? (
                       isJobOpen ? (
                         <Button
@@ -383,6 +581,15 @@ export function JobCandidatesDialog({ open, onOpenChange, job, onDataChanged, on
           </div>
         </DialogContent>
       </Dialog>
+
+      <CandidateDetailsDialog
+        open={Boolean(selectedCandidate)}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setSelectedCandidate(null)
+        }}
+        jobId={job?.id}
+        candidate={selectedCandidate}
+      />
 
       <StartNegotiationDialog
         open={Boolean(pendingNegotiation)}

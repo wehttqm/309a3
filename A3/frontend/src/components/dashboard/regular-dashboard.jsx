@@ -226,7 +226,7 @@ export function RegularDashboard() {
   }
 
   if (isLoading) {
-    return <DashboardSkeleton cards= "4" />
+    return <DashboardSkeleton cards="4" />
   }
 
   if (error) {

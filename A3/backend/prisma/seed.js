@@ -1,558 +1,386 @@
-/*
- * Seed data for local development.
- *
- * Negotiation testing scenarios included:
- * 1. Active negotiation: user1 <-> user4
- * 2. Active negotiation: user6 <-> user5
- * 3. Mutual interest only (no negotiation yet): user7 <-> user3
- */
 "use strict";
 
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-function addDays(baseDate, days, hour = 9) {
-  const value = new Date(baseDate);
+const PASSWORD = "123123";
+const NOW = new Date();
+const EXPIRES_AT = new Date(NOW.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+function iso(date) {
+  return new Date(date).toISOString();
+}
+
+function addDays(base, days, hour = 9) {
+  const value = new Date(base);
   value.setDate(value.getDate() + days);
   value.setHours(hour, 0, 0, 0);
   return value;
 }
 
-function addHours(baseDate, hours) {
-  const value = new Date(baseDate);
-  value.setTime(value.getTime() + hours * 60 * 60 * 1000);
-  return value;
+function addHours(base, hours) {
+  return new Date(new Date(base).getTime() + hours * 60 * 60 * 1000);
 }
 
-async function upsertSetting(key, value) {
-  return prisma.systemSetting.upsert({
-    where: { key },
-    update: { value },
-    create: { key, value },
-  });
-}
-
-async function upsertRegularUser({
-  email,
-  first_name,
-  last_name,
-  phone_number,
-  postal_address,
-  biography,
-  resetToken,
-  expiresAt,
-  lastActive,
-  available = true,
-}) {
-  return prisma.user.upsert({
-    where: { email },
-    update: {
-      first_name,
-      last_name,
-      password: "testTEST1234!",
-      role: "regular",
-      activated: true,
-      suspended: false,
-      available,
-      verified: false,
-      phone_number,
-      postal_address,
-      biography,
-      resetToken,
-      expiresAt,
-      lastActive,
-    },
-    create: {
-      email,
-      first_name,
-      last_name,
-      password: "testTEST1234!",
-      role: "regular",
-      activated: true,
-      suspended: false,
-      available,
-      phone_number,
-      postal_address,
-      biography,
-      resetToken,
-      expiresAt,
-      lastActive,
-    },
-  });
-}
-
-async function main() {
-  const now = new Date();
-  const expiryDate = addDays(now, 1, 23);
-
+async function resetDatabase() {
   await prisma.negotiation.deleteMany();
   await prisma.interest.deleteMany();
   await prisma.jobPosting.deleteMany();
   await prisma.qualification.deleteMany();
   await prisma.positionType.deleteMany();
+  await prisma.systemSetting.deleteMany();
+  await prisma.user.deleteMany();
 
-  const regularUser = await upsertRegularUser({
-    email: "user1@example.com",
-    first_name: "User",
-    last_name: "One",
-    phone_number: "416-555-0101",
-    postal_address: "100 College St, Toronto, ON",
-    biography: "Seeded regular user for local testing.",
-    resetToken: "de90849c-9ab7-494e-a022-8c0d9dae0ef3",
-    expiresAt: expiryDate,
-    lastActive: now,
-  });
+  try {
+    await prisma.$executeRawUnsafe(`DELETE FROM sqlite_sequence WHERE name IN ('User','PositionType','Qualification','JobPosting','Negotiation','Interest')`);
+  } catch (error) {
+    // Ignore if sqlite_sequence is unavailable.
+  }
+}
 
-  const discoverableCandidate = await upsertRegularUser({
-    email: "user6@example.com",
-    first_name: "Casey",
-    last_name: "Nguyen",
-    phone_number: "416-555-0106",
-    postal_address: "75 Dundas St W, Toronto, ON",
-    biography: "Available and qualified candidate for business candidate search.",
-    resetToken: "de90849c-9ab7-494e-a022-8c0d9dae0ef8",
-    expiresAt: expiryDate,
-    lastActive: now,
-  });
+async function createSettings() {
+  const settings = [
+    ["reset-cooldown", "60"],
+    ["job-start-window", "168"],
+    ["negotiation-window", "900"],
+    ["availability-timeout", "300"],
+  ];
 
-  const interestedCandidate = await upsertRegularUser({
-    email: "user7@example.com",
-    first_name: "Jordan",
-    last_name: "Kim",
-    phone_number: "416-555-0107",
-    postal_address: "300 King St W, Toronto, ON",
-    biography: "Candidate seeded for mutual-interest negotiation start testing.",
-    resetToken: "de90849c-9ab7-494e-a022-8c0d9dae0ef9",
-    expiresAt: expiryDate,
-    lastActive: now,
-  });
+  for (const [key, value] of settings) {
+    await prisma.systemSetting.create({ data: { key, value } });
+  }
+}
 
-  await prisma.user.upsert({
-    where: { email: "user2@example.com" },
-    update: {
-      first_name: "User",
-      last_name: "Admin",
-      password: "testTEST1234!",
+async function createPositionTypes() {
+  const definitions = [
+    ["Dental Assistant (Level 1)", "Entry-level chairside and sterilization support.", false],
+    ["Dental Assistant (Level 2)", "Expanded-duty dental assisting.", false],
+    ["Dental Hygienist", "Preventive oral care and scaling appointments.", false],
+    ["Reception / Front Desk", "Patient scheduling, billing, and front-desk support.", false],
+    ["Treatment Coordinator", "Patient communication and treatment planning support.", false],
+    ["Sterilization Technician", "Instrument reprocessing and sterilization workflow.", false],
+    ["Dental Administrator", "Office administration and insurance coordination.", false],
+    ["Orthodontic Assistant", "Orthodontic chairside support.", false],
+    ["Oral Surgery Assistant", "Surgical setup and sedation support.", false],
+    ["Clinical Floater", "Cross-functional clinic support across departments.", true],
+  ];
+
+  const positionTypes = [];
+  for (const [name, description, hidden] of definitions) {
+    positionTypes.push(
+      await prisma.positionType.create({ data: { name, description, hidden } }),
+    );
+  }
+
+  return positionTypes;
+}
+
+async function createAdmin() {
+  return prisma.user.create({
+    data: {
+      email: "admin1@csc309.utoronto.ca",
+      password: PASSWORD,
       role: "admin",
       activated: true,
-      resetToken: "de90849c-9ab7-494e-a022-8c0d9dae0ef4",
-      expiresAt: expiryDate,
-      lastActive: now,
-    },
-    create: {
-      email: "user2@example.com",
-      first_name: "User",
+      suspended: false,
+      verified: false,
+      available: false,
+      lastActive: NOW,
+      first_name: "Avery",
       last_name: "Admin",
-      password: "testTEST1234!",
-      role: "admin",
-      activated: true,
-      resetToken: "de90849c-9ab7-494e-a022-8c0d9dae0ef4",
-      expiresAt: expiryDate,
-      lastActive: now,
+      phone_number: "416-555-9001",
+      postal_address: "40 St George St, Toronto, ON",
+      biography: "Primary seeded administrator account.",
+      resetToken: "seed-admin-1",
+      expiresAt: EXPIRES_AT,
     },
   });
+}
 
-  const businessOne = await prisma.user.upsert({
-    where: { email: "user3@example.com" },
-    update: {
-      password: "testTEST1234!",
-      role: "business",
-      activated: true,
-      verified: true,
-      business_name: "Northwind Staffing",
-      owner_name: "Nadia Noor",
-      phone_number: "416-555-0201",
-      postal_address: "200 Front St W, Toronto, ON",
-      locationLat: 43.6455,
-      locationLon: -79.3807,
-      biography: "Warehouse and logistics shifts across downtown Toronto.",
-      resetToken: "de90849c-9ab7-494e-a022-8c0d9dae0ef5",
-      expiresAt: expiryDate,
-      lastActive: now,
-    },
-    create: {
-      email: "user3@example.com",
-      password: "testTEST1234!",
-      role: "business",
-      activated: true,
-      verified: true,
-      business_name: "Northwind Staffing",
-      owner_name: "Nadia Noor",
-      phone_number: "416-555-0201",
-      postal_address: "200 Front St W, Toronto, ON",
-      locationLat: 43.6455,
-      locationLon: -79.3807,
-      biography: "Warehouse and logistics shifts across downtown Toronto.",
-      resetToken: "de90849c-9ab7-494e-a022-8c0d9dae0ef5",
-      expiresAt: expiryDate,
-      lastActive: now,
-    },
-  });
+async function createBusinesses() {
+  const businesses = [];
+  const businessNames = [
+    "Bloor Dental Group",
+    "Harbourfront Smiles",
+    "Annex Family Dental",
+    "Queen West Ortho",
+    "Midtown Dental Studio",
+    "Maple Leaf Oral Surgery",
+    "Liberty Village Dental",
+    "Yorkville Dental Care",
+    "Riverside Dentistry",
+    "Leslieville Dental Loft",
+  ];
 
-  const businessTwo = await prisma.user.upsert({
-    where: { email: "user4@example.com" },
-    update: {
-      password: "testTEST1234!",
-      role: "business",
-      activated: true,
-      verified: true,
-      business_name: "Maple Works Co",
-      owner_name: "Maya Patel",
-      phone_number: "416-555-0202",
-      postal_address: "55 Queen St E, Toronto, ON",
-      locationLat: 43.6526,
-      locationLon: -79.3748,
-      biography: "General labour and light industrial placements.",
-      resetToken: "de90849c-9ab7-494e-a022-8c0d9dae0ef6",
-      expiresAt: expiryDate,
-      lastActive: now,
-    },
-    create: {
-      email: "user4@example.com",
-      password: "testTEST1234!",
-      role: "business",
-      activated: true,
-      verified: true,
-      business_name: "Maple Works Co",
-      owner_name: "Maya Patel",
-      phone_number: "416-555-0202",
-      postal_address: "55 Queen St E, Toronto, ON",
-      locationLat: 43.6526,
-      locationLon: -79.3748,
-      biography: "General labour and light industrial placements.",
-      resetToken: "de90849c-9ab7-494e-a022-8c0d9dae0ef6",
-      expiresAt: expiryDate,
-      lastActive: now,
-    },
-  });
-
-  const businessThree = await prisma.user.upsert({
-    where: { email: "user5@example.com" },
-    update: {
-      password: "testTEST1234!",
-      role: "business",
-      activated: true,
-      verified: true,
-      business_name: "Harbour Industrial",
-      owner_name: "Hassan Lee",
-      phone_number: "416-555-0203",
-      postal_address: "10 Commissioners St, Toronto, ON",
-      locationLat: 43.6401,
-      locationLon: -79.3417,
-      biography: "Forklift, shipping, and dock operations roles.",
-      resetToken: "de90849c-9ab7-494e-a022-8c0d9dae0ef7",
-      expiresAt: expiryDate,
-      lastActive: now,
-    },
-    create: {
-      email: "user5@example.com",
-      password: "testTEST1234!",
-      role: "business",
-      activated: true,
-      verified: true,
-      business_name: "Harbour Industrial",
-      owner_name: "Hassan Lee",
-      phone_number: "416-555-0203",
-      postal_address: "10 Commissioners St, Toronto, ON",
-      locationLat: 43.6401,
-      locationLon: -79.3417,
-      biography: "Forklift, shipping, and dock operations roles.",
-      resetToken: "de90849c-9ab7-494e-a022-8c0d9dae0ef7",
-      expiresAt: expiryDate,
-      lastActive: now,
-    },
-  });
-
-  await upsertSetting("reset-cooldown", "1");
-  await upsertSetting("job-start-window", "168");
-  await upsertSetting("negotiation-window", "900");
-  await upsertSetting("availability-timeout", "60");
-
-  const generalLabour = await prisma.positionType.create({
-    data: {
-      name: "General Labour",
-      description: "Entry-level warehouse and labour shifts.",
-      hidden: false,
-    },
-  });
-
-  const warehouseAssociate = await prisma.positionType.create({
-    data: {
-      name: "Warehouse Associate",
-      description: "Picking, packing, and warehouse support work.",
-      hidden: false,
-    },
-  });
-
-  const dockSupport = await prisma.positionType.create({
-    data: {
-      name: "Dock Support",
-      description: "Shipping, receiving, and loading assistance.",
-      hidden: false,
-    },
-  });
-
-  await prisma.qualification.createMany({
-    data: [
-      {
-        userId: regularUser.id,
-        positionTypeId: generalLabour.id,
-        status: "approved",
-        note: "Seeded approved qualification",
+  for (let i = 1; i <= 10; i += 1) {
+    const activated = i !== 10;
+    const verified = i <= 8;
+    const business = await prisma.user.create({
+      data: {
+        email: `business${i}@csc309.utoronto.ca`,
+        password: PASSWORD,
+        role: "business",
+        activated,
+        verified,
+        suspended: false,
+        available: false,
+        lastActive: addHours(NOW, -i),
+        business_name: businessNames[i - 1],
+        owner_name: `Owner ${i}`,
+        phone_number: `416-555-22${String(i).padStart(2, "0")}`,
+        postal_address: `${100 + i} Queen St W, Toronto, ON`,
+        locationLat: 43.64 + i * 0.004,
+        locationLon: -79.40 + i * 0.003,
+        biography: `${businessNames[i - 1]} is a seeded clinic account for workflow and pagination testing.`,
+        avatar: `/uploads/businesses/business${i}-avatar.png`,
+        resetToken: `seed-business-${i}`,
+        expiresAt: EXPIRES_AT,
       },
-      {
-        userId: regularUser.id,
-        positionTypeId: warehouseAssociate.id,
-        status: "approved",
-        note: "Seeded approved qualification",
-      },
-      {
-        userId: regularUser.id,
-        positionTypeId: dockSupport.id,
-        status: "approved",
-        note: "Seeded approved qualification",
-      },
-      {
-        userId: discoverableCandidate.id,
-        positionTypeId: generalLabour.id,
-        status: "approved",
-        note: "Discoverable candidate qualification",
-      },
-      {
-        userId: discoverableCandidate.id,
-        positionTypeId: warehouseAssociate.id,
-        status: "approved",
-        note: "Discoverable candidate qualification",
-      },
-      {
-        userId: discoverableCandidate.id,
-        positionTypeId: dockSupport.id,
-        status: "approved",
-        note: "Discoverable candidate qualification",
-      },
-      {
-        userId: interestedCandidate.id,
-        positionTypeId: generalLabour.id,
-        status: "approved",
-        note: "Interested candidate qualification",
-      },
-      {
-        userId: interestedCandidate.id,
-        positionTypeId: warehouseAssociate.id,
-        status: "approved",
-        note: "Interested candidate qualification",
-      },
-    ],
-  });
+    });
 
-  const openJobs = await prisma.jobPosting.createManyAndReturn
-    ? await prisma.jobPosting.createManyAndReturn({
-        data: [
-          {
-            businessId: businessOne.id,
-            positionTypeId: generalLabour.id,
-            salaryMin: 18,
-            salaryMax: 21,
-            startTime: addDays(now, 2, 8),
-            endTime: addDays(now, 2, 16),
-            note: "Morning loading crew",
-            status: "open",
-          },
-          {
-            businessId: businessOne.id,
-            positionTypeId: warehouseAssociate.id,
-            salaryMin: 20,
-            salaryMax: 24,
-            startTime: addDays(now, 3, 9),
-            endTime: addDays(now, 3, 17),
-            note: "Packing and inventory support",
-            status: "open",
-          },
-          {
-            businessId: businessTwo.id,
-            positionTypeId: generalLabour.id,
-            salaryMin: 19,
-            salaryMax: 22,
-            startTime: addDays(now, 4, 7),
-            endTime: addDays(now, 4, 15),
-            note: "Production floor support",
-            status: "open",
-          },
-          {
-            businessId: businessTwo.id,
-            positionTypeId: warehouseAssociate.id,
-            salaryMin: 21,
-            salaryMax: 25,
-            startTime: addDays(now, 5, 10),
-            endTime: addDays(now, 5, 18),
-            note: "Afternoon warehouse shift",
-            status: "open",
-          },
-          {
-            businessId: businessThree.id,
-            positionTypeId: dockSupport.id,
-            salaryMin: 22,
-            salaryMax: 26,
-            startTime: addDays(now, 6, 6),
-            endTime: addDays(now, 6, 14),
-            note: "Receiving and dock assistance",
-            status: "open",
-          },
-        ],
-      })
-    : null;
+    businesses.push(business);
+  }
 
-  if (!openJobs) {
-    await prisma.jobPosting.createMany({
-      data: [
-        {
-          businessId: businessOne.id,
-          positionTypeId: generalLabour.id,
-          salaryMin: 18,
-          salaryMax: 21,
-          startTime: addDays(now, 2, 8),
-          endTime: addDays(now, 2, 16),
-          note: "Morning loading crew",
-          status: "open",
-        },
-        {
-          businessId: businessOne.id,
-          positionTypeId: warehouseAssociate.id,
-          salaryMin: 20,
-          salaryMax: 24,
-          startTime: addDays(now, 3, 9),
-          endTime: addDays(now, 3, 17),
-          note: "Packing and inventory support",
-          status: "open",
-        },
-        {
-          businessId: businessTwo.id,
-          positionTypeId: generalLabour.id,
-          salaryMin: 19,
-          salaryMax: 22,
-          startTime: addDays(now, 4, 7),
-          endTime: addDays(now, 4, 15),
-          note: "Production floor support",
-          status: "open",
-        },
-        {
-          businessId: businessTwo.id,
-          positionTypeId: warehouseAssociate.id,
-          salaryMin: 21,
-          salaryMax: 25,
-          startTime: addDays(now, 5, 10),
-          endTime: addDays(now, 5, 18),
-          note: "Afternoon warehouse shift",
-          status: "open",
-        },
-        {
-          businessId: businessThree.id,
-          positionTypeId: dockSupport.id,
-          salaryMin: 22,
-          salaryMax: 26,
-          startTime: addDays(now, 6, 6),
-          endTime: addDays(now, 6, 14),
-          note: "Receiving and dock assistance",
-          status: "open",
-        },
-      ],
+  return businesses;
+}
+
+async function createRegularUsers() {
+  const firstNames = [
+    "Alice", "Ben", "Chloe", "Daniel", "Emma", "Farah", "Gavin", "Hana", "Isaac", "Jasmin",
+    "Kai", "Leah", "Mason", "Nina", "Owen", "Priya", "Quinn", "Riley", "Sara", "Tyler",
+  ];
+  const lastNames = [
+    "Ng", "Patel", "Li", "Brown", "Ahmed", "Kim", "Lopez", "Singh", "Wilson", "Martin",
+    "Taylor", "Garcia", "Chan", "Khan", "Wright", "Scott", "Young", "Hall", "Allen", "Moore",
+  ];
+
+  const users = [];
+  for (let i = 1; i <= 20; i += 1) {
+    const activated = i !== 19;
+    const suspended = i === 18;
+    const available = i <= 12 && i !== 8 && !suspended && activated;
+    const lastActive = i === 20 ? addHours(NOW, -12) : addMinutes(NOW, -(i * 3));
+
+    const user = await prisma.user.create({
+      data: {
+        email: `regular${i}@csc309.utoronto.ca`,
+        password: PASSWORD,
+        role: "regular",
+        activated,
+        suspended,
+        verified: false,
+        available,
+        lastActive,
+        first_name: firstNames[i - 1],
+        last_name: lastNames[i - 1],
+        phone_number: `647-555-11${String(i).padStart(2, "0")}`,
+        postal_address: `${10 + i} College St, Toronto, ON`,
+        birthday: `199${i % 10}-0${(i % 9) + 1}-15`,
+        avatar: `/uploads/users/regular${i}-avatar.png`,
+        resume: `/uploads/users/regular${i}-resume.pdf`,
+        biography: `Seeded regular user ${i} for qualification, job, and negotiation workflows.`,
+        resetToken: `seed-regular-${i}`,
+        expiresAt: EXPIRES_AT,
+      },
+    });
+
+    users.push(user);
+  }
+
+  return users;
+}
+
+function addMinutes(base, minutes) {
+  return new Date(new Date(base).getTime() + minutes * 60 * 1000);
+}
+
+async function createQualifications(users, positionTypes) {
+  const qualificationRows = [];
+
+  for (let i = 0; i < 10; i += 1) {
+    qualificationRows.push({
+      userId: users[i].id,
+      positionTypeId: positionTypes[i % positionTypes.length].id,
+      status: "approved",
+      note: `Approved qualification for regular${i + 1}.`,
+      document: `/uploads/users/regular${i + 1}-qualification-a.pdf`,
+      updatedAt: addHours(NOW, -(i + 1)),
+    });
+    qualificationRows.push({
+      userId: users[i].id,
+      positionTypeId: positionTypes[(i + 1) % positionTypes.length].id,
+      status: "approved",
+      note: `Second approved qualification for regular${i + 1}.`,
+      document: `/uploads/users/regular${i + 1}-qualification-b.pdf`,
+      updatedAt: addHours(NOW, -(i + 2)),
     });
   }
 
-  const businessOneOpenGeneral = await prisma.jobPosting.findFirst({
-    where: {
-      businessId: businessOne.id,
-      positionTypeId: generalLabour.id,
-      status: "open",
-      note: "Morning loading crew",
+  qualificationRows.push(
+    {
+      userId: users[10].id,
+      positionTypeId: positionTypes[2].id,
+      status: "submitted",
+      note: "Awaiting admin review.",
+      document: "/uploads/users/regular11-qualification.pdf",
+      updatedAt: addHours(NOW, -6),
     },
-  });
-
-  const businessTwoOpenWarehouse = await prisma.jobPosting.findFirst({
-    where: {
-      businessId: businessTwo.id,
-      positionTypeId: warehouseAssociate.id,
-      status: "open",
-      note: "Afternoon warehouse shift",
+    {
+      userId: users[11].id,
+      positionTypeId: positionTypes[3].id,
+      status: "revised",
+      note: "Revised submission ready for admin attention.",
+      document: "/uploads/users/regular12-qualification.pdf",
+      updatedAt: addHours(NOW, -5),
     },
-  });
-
-  const businessThreeOpenDock = await prisma.jobPosting.findFirst({
-    where: {
-      businessId: businessThree.id,
-      positionTypeId: dockSupport.id,
-      status: "open",
-      note: "Receiving and dock assistance",
+    {
+      userId: users[12].id,
+      positionTypeId: positionTypes[4].id,
+      status: "created",
+      note: "Draft qualification request.",
+      document: null,
+      updatedAt: addHours(NOW, -4),
     },
-  });
+    {
+      userId: users[13].id,
+      positionTypeId: positionTypes[5].id,
+      status: "rejected",
+      note: "Rejected qualification request for testing revision flow.",
+      document: "/uploads/users/regular14-qualification.pdf",
+      updatedAt: addHours(NOW, -3),
+    },
+    {
+      userId: users[14].id,
+      positionTypeId: positionTypes[6].id,
+      status: "approved",
+      note: "Approved admin qualification.",
+      document: "/uploads/users/regular15-qualification.pdf",
+      updatedAt: addHours(NOW, -2),
+    },
+    {
+      userId: users[15].id,
+      positionTypeId: positionTypes[7].id,
+      status: "approved",
+      note: "Approved orthodontic assistant qualification.",
+      document: "/uploads/users/regular16-qualification.pdf",
+      updatedAt: addHours(NOW, -1),
+    },
+  );
 
-  await prisma.jobPosting.createMany({
-    data: [
-      {
-        businessId: businessOne.id,
-        positionTypeId: generalLabour.id,
-        filledByUserId: regularUser.id,
-        salaryMin: 23,
-        salaryMax: 27,
-        startTime: addDays(now, 1, 9),
-        endTime: addDays(now, 1, 17),
-        note: "Upcoming filled shift for /my/jobs testing",
+  await prisma.qualification.createMany({ data: qualificationRows });
+}
+
+async function createJobs(businesses, users, positionTypes) {
+  const jobs = [];
+
+  for (let b = 0; b < 8; b += 1) {
+    for (let j = 0; j < 3; j += 1) {
+      jobs.push(
+        await prisma.jobPosting.create({
+          data: {
+            businessId: businesses[b].id,
+            positionTypeId: positionTypes[(b + j) % 8].id,
+            salaryMin: 28 + j,
+            salaryMax: 34 + j,
+            startTime: addDays(NOW, b + j + 1, 8 + j),
+            endTime: addDays(NOW, b + j + 1, 16 + j),
+            note: `Open seeded job ${jobs.length + 1} for ${businesses[b].business_name}.`,
+            status: "open",
+          },
+        }),
+      );
+    }
+  }
+
+  jobs.push(
+    await prisma.jobPosting.create({
+      data: {
+        businessId: businesses[0].id,
+        positionTypeId: positionTypes[0].id,
+        filledByUserId: users[5].id,
+        salaryMin: 36,
+        salaryMax: 42,
+        startTime: addDays(NOW, 2, 9),
+        endTime: addDays(NOW, 2, 17),
+        note: "Filled future shift for candidate history testing.",
         status: "filled",
       },
-      {
-        businessId: businessTwo.id,
-        positionTypeId: warehouseAssociate.id,
-        filledByUserId: regularUser.id,
-        salaryMin: 24,
-        salaryMax: 28,
-        startTime: addHours(now, -2),
-        endTime: addHours(now, 4),
-        note: "NO-SHOW TEST for user1: active in-progress shift. Log in as user4@example.com (Maple Works Co) and report no-show from the filled jobs list.",
+    }),
+    await prisma.jobPosting.create({
+      data: {
+        businessId: businesses[1].id,
+        positionTypeId: positionTypes[1].id,
+        filledByUserId: users[0].id,
+        salaryMin: 37,
+        salaryMax: 43,
+        startTime: addHours(NOW, -2),
+        endTime: addHours(NOW, 4),
+        note: "NO-SHOW TEST: in-progress filled job for business2.",
         status: "filled",
       },
-      {
-        businessId: businessThree.id,
-        positionTypeId: dockSupport.id,
-        filledByUserId: regularUser.id,
-        salaryMin: 25,
-        salaryMax: 29,
-        startTime: addDays(now, -3, 8),
-        endTime: addDays(now, -3, 16),
-        note: "Completed shift for /my/jobs testing",
+    }),
+    await prisma.jobPosting.create({
+      data: {
+        businessId: businesses[2].id,
+        positionTypeId: positionTypes[2].id,
+        filledByUserId: users[1].id,
+        salaryMin: 35,
+        salaryMax: 41,
+        startTime: addDays(NOW, -2, 8),
+        endTime: addDays(NOW, -2, 16),
+        note: "Completed seeded job 1.",
         status: "completed",
       },
-      {
-        businessId: businessOne.id,
-        positionTypeId: generalLabour.id,
-        filledByUserId: regularUser.id,
-        salaryMin: 22,
-        salaryMax: 24,
-        startTime: addDays(now, -1, 9),
-        endTime: addDays(now, -1, 17),
-        note: "Seeded canceled shift so user1 also has visible job history after no-show-style outcomes.",
+    }),
+    await prisma.jobPosting.create({
+      data: {
+        businessId: businesses[3].id,
+        positionTypeId: positionTypes[3].id,
+        filledByUserId: users[2].id,
+        salaryMin: 35,
+        salaryMax: 41,
+        startTime: addDays(NOW, -4, 10),
+        endTime: addDays(NOW, -4, 18),
+        note: "Completed seeded job 2.",
+        status: "completed",
+      },
+    }),
+    await prisma.jobPosting.create({
+      data: {
+        businessId: businesses[4].id,
+        positionTypeId: positionTypes[4].id,
+        filledByUserId: users[3].id,
+        salaryMin: 32,
+        salaryMax: 38,
+        startTime: addDays(NOW, -1, 8),
+        endTime: addDays(NOW, -1, 16),
+        note: "Canceled seeded job 1.",
         status: "canceled",
       },
-    ],
-  });
+    }),
+    await prisma.jobPosting.create({
+      data: {
+        businessId: businesses[5].id,
+        positionTypeId: positionTypes[5].id,
+        filledByUserId: users[4].id,
+        salaryMin: 33,
+        salaryMax: 39,
+        startTime: addDays(NOW, -3, 11),
+        endTime: addDays(NOW, -3, 19),
+        note: "Canceled seeded job 2.",
+        status: "canceled",
+      },
+    }),
+  );
 
-  // Active negotiation A: user1 <-> businessTwo (user4)
-  const negotiationJobA = await prisma.jobPosting.create({
-    data: {
-      businessId: businessTwo.id,
-      positionTypeId: warehouseAssociate.id,
-      salaryMin: 26,
-      salaryMax: 30,
-      startTime: addDays(now, 2, 12),
-      endTime: addDays(now, 2, 20),
-      note: "Active negotiation seed job A",
-      status: "open",
-    },
-  });
+  return jobs;
+}
 
-  const mutualInterestA = await prisma.interest.create({
+async function createInterestAndNegotiationScenarios(users, businesses, jobs) {
+  const activeInterestA = await prisma.interest.create({
     data: {
-      userId: regularUser.id,
-      jobId: negotiationJobA.id,
+      userId: users[0].id,
+      jobId: jobs[0].id,
       candidateInterested: true,
       businessInterested: true,
     },
@@ -560,34 +388,18 @@ async function main() {
 
   await prisma.negotiation.create({
     data: {
-      jobId: negotiationJobA.id,
-      userId: regularUser.id,
-      interestId: mutualInterestA.id,
+      jobId: jobs[0].id,
+      userId: users[0].id,
+      interestId: activeInterestA.id,
+      expiresAt: addHours(NOW, 6),
       status: "active",
-      expiresAt: addHours(now, 6),
-      candidateDecision: null,
-      businessDecision: null,
     },
   });
 
-  // Active negotiation B: user6 <-> businessThree (user5)
-  const negotiationJobB = await prisma.jobPosting.create({
+  const activeInterestB = await prisma.interest.create({
     data: {
-      businessId: businessThree.id,
-      positionTypeId: dockSupport.id,
-      salaryMin: 27,
-      salaryMax: 31,
-      startTime: addDays(now, 3, 11),
-      endTime: addDays(now, 3, 19),
-      note: "Active negotiation seed job B",
-      status: "open",
-    },
-  });
-
-  const mutualInterestB = await prisma.interest.create({
-    data: {
-      userId: discoverableCandidate.id,
-      jobId: negotiationJobB.id,
+      userId: users[1].id,
+      jobId: jobs[3].id,
       candidateInterested: true,
       businessInterested: true,
     },
@@ -595,73 +407,143 @@ async function main() {
 
   await prisma.negotiation.create({
     data: {
-      jobId: negotiationJobB.id,
-      userId: discoverableCandidate.id,
-      interestId: mutualInterestB.id,
+      jobId: jobs[3].id,
+      userId: users[1].id,
+      interestId: activeInterestB.id,
+      expiresAt: addHours(NOW, 5),
       status: "active",
-      expiresAt: addHours(now, 5),
-      candidateDecision: null,
+      candidateDecision: "accept",
       businessDecision: null,
     },
   });
 
-  // Mutual interest only, no negotiation yet: user7 <-> businessOne (user3)
-  if (businessOneOpenGeneral) {
-    await prisma.interest.create({
-      data: {
-        userId: interestedCandidate.id,
-        jobId: businessOneOpenGeneral.id,
-        candidateInterested: true,
-        businessInterested: true,
-      },
-    });
-  }
+  await prisma.interest.create({
+    data: {
+      userId: users[2].id,
+      jobId: jobs[6].id,
+      candidateInterested: true,
+      businessInterested: true,
+    },
+  });
 
-  // One-sided business interest for business candidate workflow.
-  if (businessTwoOpenWarehouse) {
-    await prisma.interest.create({
-      data: {
-        userId: interestedCandidate.id,
-        jobId: businessTwoOpenWarehouse.id,
-        candidateInterested: false,
-        businessInterested: true,
-      },
-    });
-  }
+  await prisma.interest.create({
+    data: {
+      userId: users[3].id,
+      jobId: jobs[7].id,
+      candidateInterested: true,
+      businessInterested: false,
+    },
+  });
 
-  // One-sided candidate interest for another open job.
-  if (businessThreeOpenDock) {
-    await prisma.interest.create({
-      data: {
-        userId: regularUser.id,
-        jobId: businessThreeOpenDock.id,
-        candidateInterested: true,
-        businessInterested: false,
-      },
-    });
-  }
+  await prisma.interest.create({
+    data: {
+      userId: users[4].id,
+      jobId: jobs[8].id,
+      candidateInterested: false,
+      businessInterested: true,
+    },
+  });
+
+  await prisma.interest.create({
+    data: {
+      userId: users[5].id,
+      jobId: jobs[24].id,
+      candidateInterested: null,
+      businessInterested: null,
+    },
+  });
+
+  await prisma.negotiation.create({
+    data: {
+      jobId: jobs[24].id,
+      userId: users[5].id,
+      interestId: null,
+      expiresAt: addHours(NOW, -24),
+      status: "success",
+      candidateDecision: "accept",
+      businessDecision: "accept",
+    },
+  });
+
+  await prisma.interest.create({
+    data: {
+      userId: users[6].id,
+      jobId: jobs[9].id,
+      candidateInterested: null,
+      businessInterested: null,
+    },
+  });
+
+  await prisma.negotiation.create({
+    data: {
+      jobId: jobs[9].id,
+      userId: users[6].id,
+      interestId: null,
+      expiresAt: addHours(NOW, -10),
+      status: "failed",
+      candidateDecision: "decline",
+      businessDecision: null,
+    },
+  });
+
+  await prisma.interest.create({
+    data: {
+      userId: users[7].id,
+      jobId: jobs[10].id,
+      candidateInterested: true,
+      businessInterested: true,
+    },
+  });
+
+  await prisma.interest.create({
+    data: {
+      userId: users[8].id,
+      jobId: jobs[11].id,
+      candidateInterested: false,
+      businessInterested: true,
+    },
+  });
+
+  await prisma.interest.create({
+    data: {
+      userId: users[9].id,
+      jobId: jobs[12].id,
+      candidateInterested: true,
+      businessInterested: false,
+    },
+  });
+}
+
+async function main() {
+  await resetDatabase();
+  await createSettings();
+  const positionTypes = await createPositionTypes();
+  await createAdmin();
+  const businesses = await createBusinesses();
+  const users = await createRegularUsers();
+  await createQualifications(users, positionTypes);
+  const jobs = await createJobs(businesses, users, positionTypes);
+  await createInterestAndNegotiationScenarios(users, businesses, jobs);
 
   console.log("Seed complete.");
-  console.log("Active negotiation A:");
-  console.log("  regular  user1@example.com / testTEST1234!");
-  console.log("  business user4@example.com / testTEST1234!");
-  console.log("Active negotiation B:");
-  console.log("  regular  user6@example.com / testTEST1234!");
-  console.log("  business user5@example.com / testTEST1234!");
-  console.log("Mutual interest only, ready to start negotiation:");
-  console.log("  regular  user7@example.com / testTEST1234!");
-  console.log("  business user3@example.com / testTEST1234!");
-  console.log("Admin: user2@example.com / testTEST1234!");
-  console.log("Businesses: user3@example.com, user4@example.com, user5@example.com / testTEST1234!");
-  console.log("No-show test: log in as user4@example.com and use the filled job with the note 'NO-SHOW TEST for user1...' to report a no-show for user1@example.com.");
+  console.log("Admin: admin1@csc309.utoronto.ca / 123123");
+  console.log("Regular users: regular1@csc309.utoronto.ca ... regular20@csc309.utoronto.ca / 123123");
+  console.log("Businesses: business1@csc309.utoronto.ca ... business10@csc309.utoronto.ca / 123123");
+  console.log("Active negotiations:");
+  console.log("  regular1@csc309.utoronto.ca <-> business1@csc309.utoronto.ca");
+  console.log("  regular2@csc309.utoronto.ca <-> business2@csc309.utoronto.ca");
+  console.log("Ready-to-start mutual match:");
+  console.log("  regular3@csc309.utoronto.ca <-> business3@csc309.utoronto.ca");
+  console.log("No-show test:");
+  console.log("  business2@csc309.utoronto.ca has an in-progress filled job assigned to regular1@csc309.utoronto.ca");
 }
 
 main()
   .then(async () => {
-    await prisma.$disconnect()
+    await prisma.$disconnect();
   })
-  .catch(async (e) => {
-    console.error(e)
-    await prisma.$disconnect()
-    process.exit(1)
-  })
+  .catch(async (error) => {
+    console.error(error);
+    await prisma.$disconnect();
+    process.exit(1);
+  });

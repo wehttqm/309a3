@@ -191,6 +191,7 @@ const routeDefinitions = [
   ),
 
   // Negotiations
+  defineRoute("/negotiations", "GET", "strictAuth", "checkRoleRegularOrBusiness", "updateLastActive"),
   defineRoute("/negotiations", "POST", "strictAuth", "checkRoleRegularOrBusiness", "updateLastActive"),
   defineRoute(
     "/negotiations/me",

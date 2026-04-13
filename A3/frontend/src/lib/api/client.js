@@ -22,7 +22,7 @@ export const apiClient = createApiClient({
 })
 
 
-async function requestJson(path, options = {}) {
+export async function requestJson(path, options = {}) {
   const token = options.token ?? getStoredToken()
   const headers = new Headers(options.headers || {})
 

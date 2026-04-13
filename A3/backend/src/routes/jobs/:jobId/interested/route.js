@@ -44,6 +44,7 @@ const PATCH = async (req, res) => {
         jobId,
         userId: req.auth.id,
         status: "active",
+        expiresAt: { gt: now },
       },
     });
     if (activeNegotiation) {

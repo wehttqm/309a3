@@ -1,4 +1,5 @@
 const { prisma } = require("../../../utils/prisma_client.js");
+const { findCurrentActiveNegotiation } = require("../../../utils/negotiations.js");
 
 const GET = async (req, res) => {
   try {
@@ -9,26 +10,29 @@ const GET = async (req, res) => {
       return res.status(403).json({ error: "Forbidden." });
     }
 
-    const negotiation = await prisma.negotiation.findFirst({
-      where: {
-        status: "active",
-        expiresAt: { gt: now },
-        ...(role === "regular"
-          ? { userId: req.auth.id }
-          : { job: { businessId: req.auth.id } }),
-      },
+    const activeNegotiation = await findCurrentActiveNegotiation(
+      role === "regular" ? { userId: req.auth.id } : { job: { businessId: req.auth.id } },
+      now,
+    );
+
+    if (!activeNegotiation) {
+      return res.status(404).json({ error: "No active negotiation found." });
+    }
+
+    const negotiation = await prisma.negotiation.findUnique({
+      where: { id: activeNegotiation.id },
       include: {
         job: {
           include: {
             positionType: { select: { id: true, name: true } },
-            business: { select: { id: true, business_name: true } },
+            business: { select: { id: true, business_name: true, avatar: true } },
           },
         },
-        user: { select: { id: true, first_name: true, last_name: true } },
+        user: { select: { id: true, first_name: true, last_name: true, avatar: true } },
       },
     });
 
-    if (!negotiation) {
+    if (!negotiation || negotiation.status !== "active" || new Date(negotiation.expiresAt) <= now) {
       return res.status(404).json({ error: "No active negotiation found." });
     }
 
@@ -48,6 +52,7 @@ const GET = async (req, res) => {
         business: {
           id: negotiation.job.business.id,
           business_name: negotiation.job.business.business_name,
+          avatar: negotiation.job.business.avatar,
         },
         salary_min: negotiation.job.salaryMin,
         salary_max: negotiation.job.salaryMax,
@@ -59,6 +64,7 @@ const GET = async (req, res) => {
         id: negotiation.user.id,
         first_name: negotiation.user.first_name,
         last_name: negotiation.user.last_name,
+        avatar: negotiation.user.avatar,
       },
       decisions: {
         candidate: negotiation.candidateDecision,

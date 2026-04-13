@@ -30,7 +30,7 @@ const GET = async (req, res) => {
         skip: (pageNum - 1) * limitNum,
         take: limitNum,
         include: {
-          user: { select: { id: true, first_name: true, last_name: true } },
+          user: { select: { id: true, first_name: true, last_name: true, avatar: true } },
         },
       }),
     ]);
@@ -44,6 +44,7 @@ const GET = async (req, res) => {
         id: interest.user.id,
         first_name: interest.user.first_name,
         last_name: interest.user.last_name,
+        avatar: interest.user.avatar,
       },
     }));
 

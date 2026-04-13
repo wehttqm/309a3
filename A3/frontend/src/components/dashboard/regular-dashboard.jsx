@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 
 import { UserAvatar } from "@/components/user-avatar"
+import { StartNegotiationDialog } from "@/components/negotiation/start-negotiation-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -23,9 +24,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { formatDateTime, formatSalaryRange } from "@/components/jobs/job-utils"
+import { formatDateTime, formatSalaryRange, isJobNegotiable } from "@/components/jobs/job-utils"
 import { useAuth } from "@/context/auth-context"
-import { availabilityApi, dashboardApi } from "@/lib/api/client"
+import { useSocket } from "@/context/socket-context"
+import { apiClient, availabilityApi, dashboardApi } from "@/lib/api/client"
 
 function statusVariant(value) {
   switch (value) {
@@ -121,10 +123,13 @@ function AvailabilityExplainer({ status }) {
 
 export function RegularDashboard() {
   const { user, refreshUser } = useAuth()
+  const { openNegotiation } = useSocket()
   const [dashboard, setDashboard] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+  const [pendingNegotiation, setPendingNegotiation] = useState(null)
+  const [isStartingNegotiation, setIsStartingNegotiation] = useState(false)
 
   const loadDashboard = useCallback(async () => {
     setIsLoading(true)
@@ -162,6 +167,50 @@ export function RegularDashboard() {
       toast.error(err.message || "Failed to update your status.")
     } finally {
       setIsUpdatingStatus(false)
+    }
+  }
+
+
+  const handleStartNegotiation = (interest) => {
+    if (!interest?.mutual || !interest?.interest_id || !isJobNegotiable(interest?.job)) return
+
+    setPendingNegotiation({
+      interestId: interest.interest_id,
+      jobId: interest.job?.id,
+      positionName: interest.job?.position_type?.name || `Job #${interest.job?.id}`,
+      helperText: "You are about to open the exclusive negotiation window for this match.",
+      candidate: {
+        id: user?.id,
+        role: "regular",
+        first_name: user?.first_name,
+        last_name: user?.last_name,
+        name: `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || user?.name || "You",
+        avatar: user?.avatar,
+      },
+      business: {
+        id: interest.job?.business?.id,
+        role: "business",
+        business_name: interest.job?.business?.business_name,
+        name: interest.job?.business?.business_name || "Business",
+        avatar: interest.job?.business?.avatar,
+      },
+    })
+  }
+
+  const confirmStartNegotiation = async () => {
+    if (!pendingNegotiation?.interestId) return
+
+    setIsStartingNegotiation(true)
+    try {
+      await apiClient.postNegotiations({ body: { interest_id: pendingNegotiation.interestId } })
+      setPendingNegotiation(null)
+      await loadDashboard()
+      await refreshUser()
+      openNegotiation()
+    } catch (err) {
+      toast.error(err.message || "Unable to start negotiation.")
+    } finally {
+      setIsStartingNegotiation(false)
     }
   }
 
@@ -246,7 +295,7 @@ export function RegularDashboard() {
         description="Track the one active negotiation that currently blocks other negotiations."
         count={negotiationCard.count || 0}
         actionTo="/my/jobs"
-        actionLabel="Review negotiation"
+        actionLabel="View related jobs"
       >
         <div className="rounded-2xl border px-4 py-3">
           <div className="flex items-center justify-between gap-3">
@@ -268,6 +317,9 @@ export function RegularDashboard() {
               <div className="mt-1 font-medium">{negotiationCard.current.decisions?.business || "pending"}</div>
             </div>
           </div>
+          <Button className="mt-3 w-full" onClick={() => openNegotiation(negotiationCard.current)}>
+            Review before opening
+          </Button>
         </div>
       </PreviewShell>,
     )
@@ -314,6 +366,15 @@ export function RegularDashboard() {
             </div>
             <div className="mt-1 text-sm text-muted-foreground">{interest.job?.business?.business_name || "Unknown business"}</div>
             <div className="mt-2 text-sm text-muted-foreground">{formatSalaryRange(interest.job)}</div>
+            {interest.mutual && isJobNegotiable(interest.job) ? (
+              <Button className="mt-3 w-full" onClick={() => handleStartNegotiation(interest)}>
+                Start negotiation
+              </Button>
+            ) : interest.mutual ? (
+              <div className="mt-3 rounded-xl border border-dashed px-3 py-2 text-xs text-muted-foreground">
+                This job is no longer open, so negotiation is no longer available.
+              </div>
+            ) : null}
           </div>
         ))}
       </PreviewShell>,
@@ -468,6 +529,15 @@ export function RegularDashboard() {
           </CardContent>
         </Card>
       )}
+      <StartNegotiationDialog
+        open={Boolean(pendingNegotiation)}
+        onOpenChange={(open) => {
+          if (!open) setPendingNegotiation(null)
+        }}
+        target={pendingNegotiation}
+        isSubmitting={isStartingNegotiation}
+        onConfirm={confirmStartNegotiation}
+      />
     </div>
   )
 }

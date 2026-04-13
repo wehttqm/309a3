@@ -52,6 +52,9 @@ const GET = async (req, res) => {
           select: {
             id: true,
             business_name: true,
+            avatar: true,
+            activated: true,
+            verified: true,
             locationLat: true,
             locationLon: true,
           },
@@ -104,6 +107,9 @@ const GET = async (req, res) => {
       business: {
         id: job.business.id,
         business_name: job.business.business_name,
+        avatar: job.business.avatar,
+        activated: job.business.activated,
+        verified: job.business.verified,
       },
       worker: job.filledByUser
         ? {

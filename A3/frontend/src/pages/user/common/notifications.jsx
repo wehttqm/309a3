@@ -5,7 +5,16 @@ import { useSocket } from "@/context/socket-context"
 
 export function NotificationsPage() {
   const navigate = useNavigate()
-  const { notifications, unreadCount, markAllRead, removeNotification } = useSocket()
+  const { notifications, unreadCount, markAllRead, removeNotification, openNegotiation } = useSocket()
+
+  const handleOpen = (item) => {
+    if (item?.negotiation_id) {
+      openNegotiation()
+      return
+    }
+
+    navigate(item?.href || "/notifications")
+  }
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
@@ -28,15 +37,17 @@ export function NotificationsPage() {
           notifications.map((item) => (
             <Card key={item.id}>
               <CardHeader>
-                <CardTitle className="text-lg">Negotiation Started</CardTitle>
+                <CardTitle className="text-lg">{item.title}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
-                <p>Negotiation #{item.negotiation_id} has started.</p>
+                <p>{item.message}</p>
                 <p className="text-muted-foreground">
                   {new Date(item.createdAt).toLocaleString()}
                 </p>
                 <div className="flex gap-2">
-                  <Button onClick={() => navigate("/negotiation")}>Open negotiation</Button>
+                  <Button onClick={() => handleOpen(item)}>
+                    {item.negotiation_id ? "Open negotiation" : "Open"}
+                  </Button>
                   <Button variant="ghost" onClick={() => removeNotification(item.id)}>Dismiss</Button>
                 </div>
               </CardContent>

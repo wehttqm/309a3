@@ -306,7 +306,7 @@ export function BusinessDashboard() {
                 </div>
               </div>
               <Button asChild>
-                <Link to="/business/jobs/create">Post a job</Link>
+                <Link to="/business/jobs">Manage postings</Link>
               </Button>
             </div>
 
@@ -361,7 +361,7 @@ export function BusinessDashboard() {
           </CardHeader>
           <CardContent className="flex flex-col gap-3 sm:flex-row">
             <Button asChild>
-              <Link to="/business/jobs/create">Create a posting</Link>
+              <Link to="/business/jobs">Manage postings</Link>
             </Button>
             <Button asChild variant="outline">
               <Link to="/business/jobs">Review all postings</Link>

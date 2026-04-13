@@ -66,7 +66,7 @@ const GET = async (req, res) => {
           job: {
             include: {
               positionType: { select: { id: true, name: true } },
-              business: { select: { id: true, business_name: true } },
+              business: { select: { id: true, business_name: true, avatar: true, activated: true, verified: true } },
             },
           },
         },
@@ -88,6 +88,9 @@ const GET = async (req, res) => {
         business: {
           id: interest.job.business.id,
           business_name: interest.job.business.business_name,
+          avatar: interest.job.business.avatar,
+          activated: interest.job.business.activated,
+          verified: interest.job.business.verified,
         },
         salary_min: interest.job.salaryMin,
         salary_max: interest.job.salaryMax,

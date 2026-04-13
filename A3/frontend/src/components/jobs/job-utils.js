@@ -48,3 +48,20 @@ export function jobStatusVariant(status) {
       return "outline"
   }
 }
+
+export function isJobWithinWindow(job, now = new Date()) {
+  if (!job) return false
+  const start = new Date(job.start_time)
+  const end = new Date(job.end_time)
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return false
+  return now >= start && now < end
+}
+
+export function canReportNoShow(job, now = new Date()) {
+  return job?.status === "filled" && isJobWithinWindow(job, now)
+}
+
+
+export function isJobNegotiable(job) {
+  return String(job?.status || "").toLowerCase() === "open"
+}

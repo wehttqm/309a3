@@ -9,12 +9,28 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useAuth } from "@/context/auth-context"
+import { useSocket } from "@/context/socket-context"
 import { getUserDisplayName } from "@/lib/user-status"
-import { ChevronDown } from "lucide-react"
+import { Bell, BellRing, ChevronDown } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
+
+function NegotiationLink({ hasActiveNegotiation, onClick, label = "Negotiation" }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-2 transition-colors hover:text-foreground ${hasActiveNegotiation ? "text-primary" : ""}`}
+    >
+      {hasActiveNegotiation ? <BellRing className="h-4 w-4 animate-bounce" /> : null}
+      <span>{label}</span>
+      {hasActiveNegotiation ? <span className="inline-flex h-2 w-2 rounded-full bg-primary animate-pulse" /> : null}
+    </button>
+  )
+}
 
 export default function Navbar() {
   const { user, logout, isLoading } = useAuth()
+  const { notifications, unreadCount, openNegotiation, hasActiveNegotiation } = useSocket()
   const navigate = useNavigate()
 
   const handleLogout = () => {
@@ -22,8 +38,19 @@ export default function Navbar() {
     navigate("/")
   }
 
+  const handleNotificationOpen = (item) => {
+    if (item?.negotiation_id) {
+      navigate("/negotiations")
+      openNegotiation()
+      return
+    }
+
+    navigate(item?.href || "/notifications")
+  }
+
   const displayName = getUserDisplayName(user)
   const showRealtimeLinks = user?.role === "regular" || user?.role === "business"
+  const recentNotifications = notifications.slice(0, 5)
 
   return (
     <div className="fixed top-4 left-1/2 z-50 w-[calc(100%-2rem)] max-w-5xl -translate-x-1/2 px-0">
@@ -82,22 +109,12 @@ export default function Navbar() {
               <Link to="/business/jobs" className="transition-colors hover:text-foreground">
                 My Postings
               </Link>
-              <Link to="/business/jobs/create" className="transition-colors hover:text-foreground">
-                Post a Job
-              </Link>
-            </>
+              </>
           )}
 
-          {showRealtimeLinks && (
-            <>
-              <Link to="/notifications" className="transition-colors hover:text-foreground">
-                Notifications
-              </Link>
-              <Link to="/negotiation" className="transition-colors hover:text-foreground">
-                Negotiation
-              </Link>
-            </>
-          )}
+          {showRealtimeLinks ? (
+            <NegotiationLink hasActiveNegotiation={hasActiveNegotiation} onClick={() => navigate("/negotiations")} label="Negotiations" />
+          ) : null}
 
           {user?.role === "admin" && (
             <>
@@ -124,6 +141,47 @@ export default function Navbar() {
           <Button variant="ghost" size="sm" onClick={() => navigate("/businesses")}>
             Businesses Directory
           </Button>
+
+          {showRealtimeLinks ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
+                  {hasActiveNegotiation ? <BellRing className="h-4 w-4 animate-bounce" /> : <Bell className="h-4 w-4" />}
+                  {unreadCount > 0 ? (
+                    <span className="absolute top-1 right-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-medium text-primary-foreground">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  ) : null}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                <DropdownMenuLabel className="flex items-center justify-between gap-3">
+                  <span>Notifications</span>
+                  <Button variant="ghost" size="sm" className="h-auto px-2 py-1 text-xs" onClick={() => navigate("/notifications")}>
+                    View all
+                  </Button>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {recentNotifications.length === 0 ? (
+                  <div className="px-3 py-4 text-sm text-muted-foreground">No notifications yet.</div>
+                ) : (
+                  recentNotifications.map((item) => (
+                    <DropdownMenuItem
+                      key={item.id}
+                      className="flex cursor-pointer flex-col items-start gap-1 whitespace-normal py-3"
+                      onClick={() => handleNotificationOpen(item)}
+                    >
+                      <div className="flex w-full items-start justify-between gap-3">
+                        <span className="font-medium text-foreground">{item.title}</span>
+                        {!item.read ? <span className="mt-1 h-2 w-2 rounded-full bg-primary" /> : null}
+                      </div>
+                      <span className="text-xs text-muted-foreground">{item.message}</span>
+                    </DropdownMenuItem>
+                  ))
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
 
           {!user && !isLoading ? (
             <>
@@ -158,7 +216,12 @@ export default function Navbar() {
                     <DropdownMenuItem onClick={() => navigate("/profile")}>My Profile</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate("/resume")}>Upload Resume</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate("/notifications")}>Notifications</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/negotiation")}>Negotiation</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/negotiations")}>
+                      <div className="flex items-center gap-2">
+                        {hasActiveNegotiation ? <BellRing className="h-4 w-4 animate-bounce" /> : null}
+                        <span>Negotiations</span>
+                      </div>
+                    </DropdownMenuItem>
                   </>
                 )}
 
@@ -166,19 +229,23 @@ export default function Navbar() {
                   <>
                     <DropdownMenuItem onClick={() => navigate("/profile/business")}>Business Profile</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate("/notifications")}>Notifications</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/negotiation")}>Negotiation</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/negotiations")}>
+                      <div className="flex items-center gap-2">
+                        {hasActiveNegotiation ? <BellRing className="h-4 w-4 animate-bounce" /> : null}
+                        <span>Negotiations</span>
+                      </div>
+                    </DropdownMenuItem>
                   </>
                 )}
 
                 {user.role === "admin" && (
-                  <DropdownMenuItem onClick={() => navigate("/profile/admin")}>Admin Profile</DropdownMenuItem>
+                  <>
+                    <DropdownMenuItem onClick={() => navigate("/profile/admin")}>Admin Profile</DropdownMenuItem>
+                  </>
                 )}
 
                 <DropdownMenuSeparator />
-
-                <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-                  Log Out
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>Sign Out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : null}

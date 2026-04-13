@@ -83,7 +83,15 @@ const GET = async (req, res) => {
         include: {
           positionType: { select: { id: true, name: true } },
           filledByUser: {
-            select: { id: true, first_name: true, last_name: true },
+            select: { id: true, first_name: true, last_name: true, avatar: true },
+          },
+          interests: {
+            orderBy: { createdAt: "desc" },
+            include: {
+              user: {
+                select: { id: true, first_name: true, last_name: true, avatar: true },
+              },
+            },
           },
         },
       }),
@@ -99,8 +107,26 @@ const GET = async (req, res) => {
             id: job.filledByUser.id,
             first_name: job.filledByUser.first_name,
             last_name: job.filledByUser.last_name,
+            avatar: job.filledByUser.avatar,
           }
         : null,
+      candidate_history: job.interests.map((interest) => ({
+        id: interest.user.id,
+        first_name: interest.user.first_name,
+        last_name: interest.user.last_name,
+        avatar: interest.user.avatar,
+        status:
+          job.filledByUserId === interest.user.id
+            ? "accepted"
+            : interest.candidateInterested === true && interest.businessInterested === true
+              ? "mutual"
+              : interest.candidateInterested === true
+                ? "interested"
+                : interest.businessInterested === true
+                  ? "invited"
+                  : "history",
+        createdAt: interest.createdAt,
+      })),
       salary_min: job.salaryMin,
       salary_max: job.salaryMax,
       start_time: job.startTime,

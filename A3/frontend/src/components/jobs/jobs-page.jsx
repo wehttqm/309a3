@@ -14,6 +14,10 @@ import {
 import { JobCard } from "@/components/jobs/job-card"
 import { JobFormDialog } from "@/components/jobs/job-form-dialog"
 import { JobCandidatesDialog } from "@/components/jobs/job-candidates-dialog"
+import { StartNegotiationDialog } from "@/components/negotiation/start-negotiation-dialog"
+import { useSocket } from "@/context/socket-context"
+import { useAuth } from "@/context/auth-context"
+import { canReportNoShow } from "@/components/jobs/job-utils"
 
 const REGULAR_SORT_OPTIONS = [
   { value: "start_time", label: "Start time" },
@@ -479,6 +483,8 @@ function FiltersCard({
 }
 
 export function JobsPage({ role, mode, startCreateOpen = false }) {
+  const { user } = useAuth()
+  const { openNegotiation } = useSocket()
   const [items, setItems] = useState([])
   const [count, setCount] = useState(0)
   const [page, setPage] = useState(1)
@@ -493,6 +499,8 @@ export function JobsPage({ role, mode, startCreateOpen = false }) {
   const [editingJob, setEditingJob] = useState(null)
   const [candidateJob, setCandidateJob] = useState(null)
   const [isSavingJob, setIsSavingJob] = useState(false)
+  const [pendingNegotiationJob, setPendingNegotiationJob] = useState(null)
+  const [isStartingNegotiation, setIsStartingNegotiation] = useState(false)
 
   const config = useMemo(() => getConfig(role, mode), [role, mode])
 
@@ -568,6 +576,18 @@ export function JobsPage({ role, mode, startCreateOpen = false }) {
     loadBusinesses()
   }, [role, mode])
 
+  useEffect(() => {
+    const handleNegotiationUpdate = () => {
+      load(page)
+    }
+
+    window.addEventListener("app:job-updated-from-negotiation", handleNegotiationUpdate)
+    return () => {
+      window.removeEventListener("app:job-updated-from-negotiation", handleNegotiationUpdate)
+    }
+  }, [page])
+
+
   const actOnJob = async (jobId, action) => {
     setBusyId(jobId)
     setError("")
@@ -598,12 +618,53 @@ export function JobsPage({ role, mode, startCreateOpen = false }) {
       })
     )
 
-  const handleStartNegotiation = (job) =>
-    actOnJob(job.id, () =>
-      apiClient.postNegotiations({
-        body: { interest_id: job.interest_id },
+  const handleStartNegotiation = (job) => {
+    const currentUserName = `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || user?.name || "You"
+
+    setPendingNegotiationJob({
+      interestId: job.interest_id,
+      jobId: job.id,
+      positionName: job.position_type?.name || `Job #${job.id}`,
+      helperText: "You are about to open the exclusive negotiation window for this match.",
+      candidate: {
+        id: user?.id,
+        role: "regular",
+        first_name: user?.first_name,
+        last_name: user?.last_name,
+        name: currentUserName,
+        avatar: user?.avatar,
+      },
+      business: {
+        id: job.business?.id,
+        role: "business",
+        business_name: job.business?.business_name,
+        name: job.business?.business_name || "Business",
+        avatar: job.business?.avatar,
+      },
+    })
+  }
+
+  const confirmStartNegotiation = async () => {
+    if (!pendingNegotiationJob?.interestId || !pendingNegotiationJob?.jobId) return
+
+    setIsStartingNegotiation(true)
+    setBusyId(pendingNegotiationJob.jobId)
+    setError("")
+
+    try {
+      await apiClient.postNegotiations({
+        body: { interest_id: pendingNegotiationJob.interestId },
       })
-    )
+      setPendingNegotiationJob(null)
+      await load(page)
+      openNegotiation()
+    } catch (actionError) {
+      setError(actionError.message || "Unable to start negotiation.")
+    } finally {
+      setBusyId(null)
+      setIsStartingNegotiation(false)
+    }
+  }
 
   const handleDelete = (job) => {
     const ok = window.confirm(`Delete job #${job.id}?`)
@@ -614,6 +675,28 @@ export function JobsPage({ role, mode, startCreateOpen = false }) {
       })
     )
   }
+
+
+  const handleReportNoShow = (job) => {
+    if (!canReportNoShow(job)) {
+      setError("No-show reporting is only available for filled jobs during the active work window.")
+      return
+    }
+
+    const candidateName = `${job?.worker?.first_name || ""} ${job?.worker?.last_name || ""}`.trim() || "this candidate"
+    const ok = window.confirm(
+      `Report ${candidateName} as a no-show? This will cancel the job and suspend the candidate account.`
+    )
+    if (!ok) return
+
+    return actOnJob(job.id, () =>
+      apiClient.patchJobsJobIdNoShow({
+        pathParams: { jobId: job.id },
+        body: {},
+      })
+    )
+  }
+
 
   const handleCreateJob = async (payload) => {
     setIsSavingJob(true)
@@ -678,6 +761,11 @@ export function JobsPage({ role, mode, startCreateOpen = false }) {
           <h1 className="text-3xl font-bold tracking-tight">{config.title}</h1>
           <p className="mt-2 text-muted-foreground">{config.description}</p>
           <p className="mt-2 text-sm text-muted-foreground">Total results: {count}</p>
+          {role === "business" && mode === "postings" ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Filled jobs can be reported as no-shows only during the scheduled work window.
+            </p>
+          ) : null}
         </div>
         <div className="flex flex-wrap items-end gap-3">
           {showStandalonePageSize ? (
@@ -760,6 +848,7 @@ export function JobsPage({ role, mode, startCreateOpen = false }) {
               onEdit={(selectedJob) => setEditingJob(selectedJob)}
               onDelete={handleDelete}
               onManageCandidates={(selectedJob) => setCandidateJob(selectedJob)}
+              onReportNoShow={handleReportNoShow}
             />
           )
         })}
@@ -807,6 +896,16 @@ export function JobsPage({ role, mode, startCreateOpen = false }) {
         }}
         job={candidateJob}
         onDataChanged={() => load(page)}
+      />
+
+      <StartNegotiationDialog
+        open={Boolean(pendingNegotiationJob)}
+        onOpenChange={(open) => {
+          if (!open) setPendingNegotiationJob(null)
+        }}
+        target={pendingNegotiationJob}
+        isSubmitting={isStartingNegotiation}
+        onConfirm={confirmStartNegotiation}
       />
     </div>
   )

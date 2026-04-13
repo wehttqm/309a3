@@ -18,9 +18,9 @@ import { BusinessRegister } from "./pages/user/business/register"
 import { CommonJobs } from "./pages/user/common/jobs"
 import { CommonProfile } from "./pages/user/common/profile"
 import { NotificationsPage } from "./pages/user/common/notifications"
+import { NegotiationPage } from "./pages/negotiation/negotiation-page"
 import { QualificationDetailsPage } from "./pages/user/common/qualification-details"
 import { RegularRegister } from "./pages/user/regular/register"
-import { NegotiationPage } from "./pages/negotiation/negotiation-page"
 
 import { AdminBusinessesPage } from "@/pages/user/admin/businesses"
 import { AdminPositionTypesPage } from "@/pages/user/admin/position-types"
@@ -29,7 +29,6 @@ import { AdminQualificationsPage } from "@/pages/user/admin/qualifications"
 import { AdminSystemConfigPage } from "@/pages/user/admin/system-config"
 import { AdminUsersPage } from "@/pages/user/admin/users"
 import { BusinessJobs } from "@/pages/user/business/jobs"
-import { BusinessJobsCreate } from "@/pages/user/business/jobs-create"
 import { BusinessProfile } from "@/pages/user/business/profile"
 import { RegularInterests } from "@/pages/user/regular/interests"
 import { RegularInvitations } from "@/pages/user/regular/invitations"
@@ -83,17 +82,13 @@ createRoot(document.getElementById("root")).render(
                 <Route element={<ProtectedRoute allowedRoles={["business"]} />}>
                   <Route path="/profile/business" element={<BusinessProfile />} />
                   <Route path="/business/jobs" element={<BusinessJobs />} />
-                  <Route
-                    path="/business/jobs/create"
-                    element={<BusinessJobsCreate />}
-                  />
                 </Route>
 
                 <Route
                   element={<ProtectedRoute allowedRoles={["regular", "business"]} />}
                 >
                   <Route path="/notifications" element={<NotificationsPage />} />
-                  <Route path="/negotiation" element={<NegotiationPage />} />
+                  <Route path="/negotiations" element={<NegotiationPage />} />
                 </Route>
 
                 <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>

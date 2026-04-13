@@ -137,7 +137,7 @@ const GET = async (req, res) => {
           job: {
             include: {
               positionType: { select: { id: true, name: true } },
-              business: { select: { id: true, business_name: true } },
+              business: { select: { id: true, business_name: true, avatar: true, activated: true, verified: true } },
             },
           },
         },
@@ -163,7 +163,7 @@ const GET = async (req, res) => {
           job: {
             include: {
               positionType: { select: { id: true, name: true } },
-              business: { select: { id: true, business_name: true } },
+              business: { select: { id: true, business_name: true, avatar: true, activated: true, verified: true } },
             },
           },
         },
@@ -186,6 +186,7 @@ const GET = async (req, res) => {
         where: {
           userId: req.auth.id,
           candidateInterested: true,
+          job: { status: "open" },
         },
         take: 3,
         orderBy: [{ createdAt: "desc" }],
@@ -193,7 +194,7 @@ const GET = async (req, res) => {
           job: {
             include: {
               positionType: { select: { id: true, name: true } },
-              business: { select: { id: true, business_name: true } },
+              business: { select: { id: true, business_name: true, avatar: true, activated: true, verified: true } },
             },
           },
         },
@@ -206,7 +207,7 @@ const GET = async (req, res) => {
         orderBy: [{ startTime: "asc" }, { updatedAt: "desc" }],
         include: {
           positionType: { select: { id: true, name: true } },
-          business: { select: { id: true, business_name: true } },
+          business: { select: { id: true, business_name: true, avatar: true, activated: true, verified: true } },
         },
       }),
     ]);
@@ -264,7 +265,7 @@ const GET = async (req, res) => {
         orderBy: [{ updatedAt: "desc" }, { startTime: "asc" }],
         include: {
           positionType: { select: { id: true, name: true } },
-          business: { select: { id: true, business_name: true } },
+          business: { select: { id: true, business_name: true, avatar: true, activated: true, verified: true } },
         },
       });
 

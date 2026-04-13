@@ -1,4 +1,6 @@
 const { prisma } = require("../../../../utils/prisma_client.js");
+const { get_io } = require("../../../../utils/socket_state.js");
+const { expireNegotiationIfNeeded } = require("../../../../utils/negotiations.js");
 
 const PATCH = async (req, res) => {
   try {
@@ -12,91 +14,60 @@ const PATCH = async (req, res) => {
     const { decision, negotiation_id } = req.body;
 
     if (!decision || !["accept", "decline"].includes(decision)) {
-      return res
-        .status(400)
-        .json({ error: "decision must be 'accept' or 'decline'." });
+      return res.status(400).json({ error: "decision must be 'accept' or 'decline'." });
     }
     if (negotiation_id === undefined || typeof negotiation_id !== "number") {
-      return res
-        .status(400)
-        .json({ error: "negotiation_id must be a number." });
+      return res.status(400).json({ error: "negotiation_id must be a number." });
     }
 
-    // Find the user's current active negotiation
-    const negotiation = await prisma.negotiation.findFirst({
-      where: {
-        status: "active",
-        ...(role === "regular"
-          ? { userId: req.auth.id }
-          : { job: { businessId: req.auth.id } }),
-      },
+    const negotiation = await prisma.negotiation.findUnique({
+      where: { id: negotiation_id },
       include: {
-        job: true,
-        interest: true,
+        job: { select: { id: true, businessId: true, status: true } },
+        interest: { select: { id: true } },
       },
     });
 
     if (!negotiation) {
-      return res.status(404).json({ error: "No active negotiation found." });
+      return res.status(404).json({ error: "Negotiation not found." });
     }
 
-    // Check negotiation_id matches
-    if (negotiation.id !== negotiation_id) {
-      return res.status(409).json({
-        error: "negotiation_id does not match your current active negotiation.",
-      });
+    const isParty =
+      (role === "regular" && negotiation.userId === req.auth.id) ||
+      (role === "business" && negotiation.job.businessId === req.auth.id);
+
+    if (!isParty) {
+      return res.status(404).json({ error: "Negotiation not found." });
     }
 
-    // Check not expired
+    if (negotiation.status !== "active") {
+      return res.status(409).json({ error: "Negotiation is no longer active." });
+    }
+
     if (now >= negotiation.expiresAt) {
-      await prisma.$transaction([
-        prisma.negotiation.update({
-          where: { id: negotiation.id },
-          data: { status: "failed" },
-        }),
-        prisma.interest.update({
-          where: { id: negotiation.interestId },
-          data: { candidateInterested: null, businessInterested: null },
-        }),
-        prisma.user.update({
-          where: { id: negotiation.userId },
-          data: { available: true, lastActive: now },
-        }),
-      ]);
-
+      await expireNegotiationIfNeeded(negotiation, now);
       return res.status(409).json({ error: "Negotiation has expired." });
     }
 
-    // Apply decision
-    const updateData =
-      role === "regular"
-        ? { candidateDecision: decision }
-        : { businessDecision: decision };
+    const updateData = role === "regular" ? { candidateDecision: decision } : { businessDecision: decision };
 
-    // Determine new status after this decision
-    const candidateDecision =
-      role === "regular" ? decision : negotiation.candidateDecision;
-    const businessDecision =
-      role === "business" ? decision : negotiation.businessDecision;
+    const candidateDecision = role === "regular" ? decision : negotiation.candidateDecision;
+    const businessDecision = role === "business" ? decision : negotiation.businessDecision;
 
     let newStatus = "active";
     if (decision === "decline") {
       newStatus = "failed";
-    } else if (
-      candidateDecision === "accept" &&
-      businessDecision === "accept"
-    ) {
+    } else if (candidateDecision === "accept" && businessDecision === "accept") {
       newStatus = "success";
     }
 
     updateData.status = newStatus;
 
-    // Handle terminal states in a transaction
     if (newStatus === "success") {
-      const [updatedNegotiation] = await prisma.$transaction([
+      const operations = [
         prisma.negotiation.update({
           where: { id: negotiation.id },
-          data: updateData,
+          data: { ...updateData, interestId: null },
         }),
         prisma.jobPosting.update({
           where: { id: negotiation.jobId },
@@ -106,9 +77,11 @@ const PATCH = async (req, res) => {
           where: { id: negotiation.userId },
           data: { available: true, lastActive: now },
         }),
-      ]);
+      ];
 
-      return res.status(200).json({
+      const [updatedNegotiation] = await prisma.$transaction(operations);
+
+      const responseBody = {
         id: updatedNegotiation.id,
         status: updatedNegotiation.status,
         createdAt: updatedNegotiation.createdAt,
@@ -118,28 +91,51 @@ const PATCH = async (req, res) => {
           candidate: updatedNegotiation.candidateDecision,
           business: updatedNegotiation.businessDecision,
         },
-      });
+      };
+
+      const io = get_io();
+      if (io) {
+        const payload = {
+          negotiation_id: updatedNegotiation.id,
+          status: updatedNegotiation.status,
+          createdAt: updatedNegotiation.createdAt,
+          expiresAt: updatedNegotiation.expiresAt,
+          updatedAt: updatedNegotiation.updatedAt,
+          decisions: responseBody.decisions,
+          message: "Congratulations — both parties accepted. The shift is now confirmed.",
+        };
+
+        io.to(`negotiation:${updatedNegotiation.id}`).emit("negotiation:decision", payload);
+        io.to(`negotiation:${updatedNegotiation.id}`).emit("negotiation:completed", payload);
+        io.to(`account:${negotiation.userId}`).emit("negotiation:completed", payload);
+        io.to(`account:${negotiation.job.businessId}`).emit("negotiation:completed", payload);
+      }
+
+      return res.status(200).json(responseBody);
     }
 
     if (newStatus === "failed") {
-      const [updatedNegotiation] = await prisma.$transaction([
+      const operations = [
         prisma.negotiation.update({
           where: { id: negotiation.id },
-          data: updateData,
+          data: { ...updateData, interestId: null },
         }),
-        // Reset interest for both parties
-        prisma.interest.update({
-          where: { id: negotiation.interestId },
-          data: { candidateInterested: null, businessInterested: null },
-        }),
-        // Reset regular user's inactivity timer and make available
         prisma.user.update({
           where: { id: negotiation.userId },
           data: { lastActive: now, available: true },
         }),
-      ]);
+      ];
 
-      return res.status(200).json({
+      if (negotiation.interestId) {
+        operations.splice(1, 0, prisma.interest.update({
+          where: { id: negotiation.interestId },
+          data: { candidateInterested: null, businessInterested: null },
+        }));
+      }
+
+      const [updatedNegotiation] = await prisma.$transaction(operations);
+
+      const responseBody = {
         id: updatedNegotiation.id,
         status: updatedNegotiation.status,
         createdAt: updatedNegotiation.createdAt,
@@ -149,16 +145,30 @@ const PATCH = async (req, res) => {
           candidate: updatedNegotiation.candidateDecision,
           business: updatedNegotiation.businessDecision,
         },
-      });
+      };
+
+      const io = get_io();
+      if (io) {
+        const payload = {
+          negotiation_id: updatedNegotiation.id,
+          status: updatedNegotiation.status,
+          createdAt: updatedNegotiation.createdAt,
+          expiresAt: updatedNegotiation.expiresAt,
+          updatedAt: updatedNegotiation.updatedAt,
+          decisions: responseBody.decisions,
+        };
+        io.to(`negotiation:${updatedNegotiation.id}`).emit("negotiation:decision", payload);
+      }
+
+      return res.status(200).json(responseBody);
     }
 
-    // Still active, just update the decision
     const updatedNegotiation = await prisma.negotiation.update({
       where: { id: negotiation.id },
       data: updateData,
     });
 
-    return res.status(200).json({
+    const responseBody = {
       id: updatedNegotiation.id,
       status: updatedNegotiation.status,
       createdAt: updatedNegotiation.createdAt,
@@ -168,7 +178,21 @@ const PATCH = async (req, res) => {
         candidate: updatedNegotiation.candidateDecision,
         business: updatedNegotiation.businessDecision,
       },
-    });
+    };
+
+    const io = get_io();
+    if (io) {
+      io.to(`negotiation:${updatedNegotiation.id}`).emit("negotiation:decision", {
+        negotiation_id: updatedNegotiation.id,
+        status: updatedNegotiation.status,
+        createdAt: updatedNegotiation.createdAt,
+        expiresAt: updatedNegotiation.expiresAt,
+        updatedAt: updatedNegotiation.updatedAt,
+        decisions: responseBody.decisions,
+      });
+    }
+
+    return res.status(200).json(responseBody);
   } catch (error) {
     console.error("PATCH /negotiations/me/decision error:", error);
     return res.status(500).json({ error: "Internal server error." });

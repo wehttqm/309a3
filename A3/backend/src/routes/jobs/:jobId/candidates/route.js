@@ -20,6 +20,10 @@ const GET = async (req, res) => {
       return res.status(404).json({ error: "Job not found." });
     }
 
+    if (job.status !== "open") {
+      return res.status(200).json({ count: 0, results: [] });
+    }
+
     // Fetch system availability timeout
     const availabilityTimeoutSetting = await prisma.systemSetting.findUnique({
       where: { key: "availability-timeout" },
@@ -80,6 +84,7 @@ const GET = async (req, res) => {
       id: user.id,
       first_name: user.first_name,
       last_name: user.last_name,
+      avatar: user.avatar,
       invited:
         user.interests.length > 0 &&
         user.interests[0].businessInterested === true,

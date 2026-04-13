@@ -1,4 +1,5 @@
 const { prisma } = require("../../../../../utils/prisma_client");
+const { expireNegotiationIfNeeded, findCurrentActiveNegotiation } = require("../../../../../utils/negotiations.js");
 
 const PATCH = async (req, res) => {
   try {
@@ -102,6 +103,18 @@ const PATCH = async (req, res) => {
       data: updateData,
     });
 
+    const activeNegotiation = await findCurrentActiveNegotiation({ jobId }, now);
+    if (activeNegotiation) {
+      await prisma.negotiation.update({
+        where: { id: activeNegotiation.id },
+        data: {
+          candidateDecision: null,
+          businessDecision: null,
+          status: "active",
+        },
+      });
+    }
+
     const responseFields = { id: updated.id };
     if (salary_min !== undefined) responseFields.salary_min = updated.salaryMin;
     if (salary_max !== undefined) responseFields.salary_max = updated.salaryMax;
@@ -141,7 +154,12 @@ const DELETE = async (req, res) => {
         .json({ error: "Job cannot be deleted in its current state." });
     }
 
-    if (job.negotiations.length > 0) {
+    for (const negotiation of job.negotiations) {
+      await expireNegotiationIfNeeded(negotiation, new Date());
+    }
+
+    const stillActiveNegotiation = await findCurrentActiveNegotiation({ jobId }, new Date());
+    if (stillActiveNegotiation) {
       return res
         .status(409)
         .json({ error: "Cannot delete a job with an active negotiation." });

@@ -7,6 +7,8 @@ import { useAuth } from "@/context/auth-context"
 import { apiClient } from "@/lib/api/client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { UserAvatar } from "@/components/user-avatar"
+import { deriveUserAvatarStatus, formatAvatarStatusLabel } from "@/lib/user-status"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import {
@@ -412,6 +414,7 @@ export const RegularMyJobsPage = () => {
       "Negotiation started.",
     )
 
+
   const handleDecision = async (negotiationId, decision) => {
     setDecisionBusy(true)
     try {
@@ -629,7 +632,7 @@ export const RegularMyJobsPage = () => {
           <CardHeader>
             <CardTitle>Interested Jobs</CardTitle>
             <CardDescription>
-              Watch for mutual interest so you can start a negotiation when both sides are ready.
+              You will be notified automatically when a mutual match is ready to negotiate.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -740,10 +743,20 @@ export const RegularMyJobsPage = () => {
                 {committedJobsWithState.map((job) => (
                   <div key={job.id} className="space-y-4 rounded-2xl border px-4 py-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <div className="font-medium">{job.position_type?.name || `Job #${job.id}`}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {job.business?.business_name || "Unknown business"}
+                      <div className="flex min-w-0 items-center gap-3">
+                        <UserAvatar
+                          user={{ ...job.business, role: "business" }}
+                          className="h-10 w-10"
+                          fallbackClassName="text-xs"
+                        />
+                        <div className="min-w-0">
+                          <div className="font-medium">{job.position_type?.name || `Job #${job.id}`}</div>
+                          <div className="truncate text-sm text-muted-foreground">
+                            {job.business?.business_name || "Unknown business"}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {formatAvatarStatusLabel(deriveUserAvatarStatus({ ...job.business, role: "business" }))}
+                          </div>
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-2">

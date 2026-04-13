@@ -6,45 +6,71 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { UserAvatar } from "@/components/user-avatar"
+
+function formatLocation(location) {
+  if (!location) return "—"
+  const hasLat = typeof location.lat === "number"
+  const hasLon = typeof location.lon === "number"
+  if (!hasLat || !hasLon) return "—"
+  return `${location.lat.toFixed(5)}, ${location.lon.toFixed(5)}`
+}
 
 function BusinessListCard({ business, isAdmin }) {
   return (
-    <Card className="h-full">
+    <Card className="h-full overflow-hidden">
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <CardTitle className="text-xl">{business.business_name || "Unnamed business"}</CardTitle>
-            <CardDescription className="mt-1">{business.email || "No email provided"}</CardDescription>
+          <div className="flex min-w-0 items-start gap-4">
+            <UserAvatar
+              user={business}
+              className="h-14 w-14 border"
+              fallbackClassName="text-base"
+              title={business.business_name || "Business avatar"}
+              showStatus={false}
+            />
+            <div className="min-w-0">
+              <CardTitle className="text-xl">{business.business_name || "Unnamed business"}</CardTitle>
+              <CardDescription className="mt-1 break-all">{business.email || "No email provided"}</CardDescription>
+            </div>
           </div>
           <Badge variant="secondary">Business</Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3 text-sm">
-        {isAdmin ? (
+      <CardContent className="space-y-4 text-sm">
+        {business.biography ? (
+          <p className="line-clamp-4 text-muted-foreground">{business.biography}</p>
+        ) : (
+          <p className="text-muted-foreground">No biography provided.</p>
+        )}
+
+        <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <span className="font-medium text-muted-foreground">Owner: </span>
-            <span>{business.owner_name || "—"}</span>
+            <div className="font-medium text-muted-foreground">Phone</div>
+            <div>{business.phone_number || "—"}</div>
           </div>
-        ) : null}
+        </div>
 
         <div>
-          <span className="font-medium text-muted-foreground">Phone: </span>
-          <span>{business.phone_number || "—"}</span>
-        </div>
-        <div>
-          <span className="font-medium text-muted-foreground">Address: </span>
-          <span>{business.postal_address || "—"}</span>
+          <div className="font-medium text-muted-foreground">Address</div>
+          <div>{business.postal_address || "—"}</div>
         </div>
 
         {isAdmin ? (
-          <div className="flex flex-wrap gap-2 pt-1">
-            <Badge variant={business.activated ? "default" : "outline"}>
-              {business.activated ? "Activated" : "Inactive"}
-            </Badge>
-            <Badge variant={business.verified ? "default" : "secondary"}>
-              {business.verified ? "Verified" : "Pending verification"}
-            </Badge>
-          </div>
+          <>
+            <div>
+              <div className="font-medium text-muted-foreground">Owner</div>
+              <div>{business.owner_name || "—"}</div>
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Badge variant={business.activated ? "default" : "outline"}>
+                {business.activated ? "Activated" : "Inactive"}
+              </Badge>
+              <Badge variant={business.verified ? "default" : "secondary"}>
+                {business.verified ? "Verified" : "Pending verification"}
+              </Badge>
+            </div>
+          </>
         ) : null}
       </CardContent>
     </Card>

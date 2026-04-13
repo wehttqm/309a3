@@ -11,19 +11,39 @@ async function GET(req, res) {
   try {
     const isAdmin = req.auth && req.auth.role === "admin";
 
-    const b = await prisma.user.findUnique({
+    const business = await prisma.user.findUnique({
       where: {
         id: bId,
       },
     });
 
-    if (!b) {
+    if (!business || business.role !== "business") {
       return res.json({});
     }
 
-    const { owner_name, verified, activated, ...everything_else } = b;
-    const sanitizedResults = isAdmin ? b : everything_else;
-    return res.json(sanitizedResults);
+    const {
+      password,
+      resetToken,
+      expiresAt,
+      locationLat,
+      locationLon,
+      ...everythingElse
+    } = business;
+
+    const baseBusiness = {
+      ...everythingElse,
+      location: {
+        lat: locationLat,
+        lon: locationLon,
+      },
+    };
+
+    if (isAdmin) {
+      return res.json(baseBusiness);
+    }
+
+    const { owner_name, verified, activated, ...publicFields } = baseBusiness;
+    return res.json(publicFields);
   } catch (error) {
     console.error(error);
     return res.status(500).json({ error: "Internal server error" });

@@ -154,9 +154,34 @@ async function GET(req, res) {
 
     // Non-admins should NOT see owner_name, verified, or activated
     const sanitizedResults = results.map((b) => {
-      if (isAdmin) return b;
-      const { owner_name, verified, activated, ...everything_else } = b;
-      return everything_else;
+      const {
+        password,
+        resetToken,
+        expiresAt,
+        locationLat,
+        locationLon,
+        ...everything_else
+      } = b;
+
+      if (isAdmin) {
+        return {
+          ...everything_else,
+          location: {
+            lat: locationLat,
+            lon: locationLon,
+          },
+        };
+      }
+
+      const { owner_name, verified, activated, ...publicFields } = everything_else;
+
+      return {
+        ...publicFields,
+        location: {
+          lat: locationLat,
+          lon: locationLon,
+        },
+      };
     });
 
     return res.json({ count, results: sanitizedResults });

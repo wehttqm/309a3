@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { requestJson } from "@/lib/api/client"
+import { getNegotiationStartErrorMessage, getRegularNegotiationBlockReason } from "@/lib/negotiation"
 import { useAuth } from "@/context/auth-context"
 import { useSocket } from "@/context/socket-context"
 import { UserAvatar } from "@/components/user-avatar"
@@ -154,7 +155,7 @@ function PossibleNegotiationCard({ item, onStart, isBusy }) {
 }
 
 export function NegotiationPage() {
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
   const { openNegotiation, hasActiveNegotiation } = useSocket()
   const [current, setCurrent] = useState(null)
   const [history, setHistory] = useState([])
@@ -248,17 +249,29 @@ export function NegotiationPage() {
 
   const possibleCountLabel = useMemo(() => `${possible.length} possible negotiation${possible.length === 1 ? "" : "s"}`, [possible.length])
 
+  const handleSelectPendingNegotiation = (item) => {
+    const blockedReason = user?.role === "regular" ? getRegularNegotiationBlockReason(user) : ""
+    if (blockedReason) {
+      setError(blockedReason)
+      refreshUser?.()
+      return
+    }
+
+    setPendingNegotiation(item)
+  }
+
   const confirmStartNegotiation = async () => {
     if (!pendingNegotiation?.interestId) return
     setIsStarting(true)
     setError("")
     try {
-      await requestJson("/negotiations", { method: "POST", body: { interest_id: pendingNegotiation.interestId } })
+      const negotiation = await requestJson("/negotiations", { method: "POST", body: { interest_id: pendingNegotiation.interestId } })
       setPendingNegotiation(null)
-      await loadPage()
-      openNegotiation()
+      await Promise.allSettled([loadPage(), refreshUser?.()])
+      openNegotiation(negotiation)
     } catch (err) {
-      setError(err.message || "Unable to start negotiation.")
+      setError(getNegotiationStartErrorMessage(err, user))
+      await Promise.allSettled([loadPage(), refreshUser?.()])
     } finally {
       setIsStarting(false)
     }
@@ -296,7 +309,7 @@ export function NegotiationPage() {
                 key={`${item.interestId}-${item.jobId}`}
                 item={item}
                 isBusy={isStarting && pendingNegotiation?.interestId === item.interestId}
-                onStart={setPendingNegotiation}
+                onStart={handleSelectPendingNegotiation}
               />
             ))}
           </CardContent>

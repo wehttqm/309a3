@@ -6,8 +6,7 @@ import {
   useMemo,
   useState,
 } from "react"
-import { authApi, resolveApiUrl, TOKEN_KEY } from "@/lib/api/client"
-import { Toaster } from "@/components/ui/sonner"
+import { authApi, regularActivityApi, resolveApiUrl, TOKEN_KEY } from "@/lib/api/client"
 
 const AuthContext = createContext(null)
 
@@ -126,6 +125,47 @@ export function AuthProvider({ children }) {
     restoreSession()
   }, [restoreSession])
 
+
+  useEffect(() => {
+    if (user?.role !== "regular") return undefined
+    if (user?.available !== true) return undefined
+    if (user?.suspended) return undefined
+
+    let cancelled = false
+
+    const runHeartbeat = async () => {
+      if (document.visibilityState === "hidden") return
+
+      try {
+        await regularActivityApi.ping()
+        if (!cancelled) {
+          const token = localStorage.getItem(TOKEN_KEY)
+          if (token) {
+            const currentUser = await getCurrentUser(token)
+            if (!cancelled) setUser(currentUser)
+          }
+        }
+      } catch {
+        // Ignore heartbeat failures; normal auth flows will recover if needed.
+      }
+    }
+
+    const intervalId = window.setInterval(runHeartbeat, 60 * 1000)
+    const visibilityHandler = () => {
+      if (document.visibilityState === "visible") {
+        runHeartbeat()
+      }
+    }
+
+    document.addEventListener("visibilitychange", visibilityHandler)
+
+    return () => {
+      cancelled = true
+      window.clearInterval(intervalId)
+      document.removeEventListener("visibilitychange", visibilityHandler)
+    }
+  }, [getCurrentUser, user])
+
   const login = useCallback(
     async (email, password) => {
       const data = await authApi.login({ email, password })
@@ -177,10 +217,7 @@ export function AuthProvider({ children }) {
   )
 
   return (
-    <AuthContext.Provider value={value}>
-      <Toaster />
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
   )
 }
 

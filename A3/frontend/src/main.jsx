@@ -1,7 +1,7 @@
 import { StrictMode } from "react"
 import { createRoot } from "react-dom/client"
 import { BrowserRouter, Route, Routes } from "react-router-dom"
-import { Toaster } from "sonner"
+import { Toaster } from "@/components/ui/sonner"
 
 import { AuthProvider } from "@/context/auth-context.jsx"
 import { SocketProvider } from "@/context/socket-context.jsx"
@@ -114,7 +114,7 @@ createRoot(document.getElementById("root")).render(
               <Route path="*" element={<NotFound />} />
             </Routes>
 
-            <Toaster richColors position="top-right" />
+            <Toaster richColors position="top-right" closeButton expand={false} visibleToasts={4} />
           </>
         </SocketProvider>
       </AuthProvider>

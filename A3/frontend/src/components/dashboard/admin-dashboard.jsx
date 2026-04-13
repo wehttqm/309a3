@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { toast } from "sonner"
+import { notify } from "@/lib/notify"
 import { Link } from "react-router-dom"
 import {
   ArrowRight,
@@ -170,10 +170,10 @@ export function AdminDashboard() {
 
     try {
       await adminApi.setBusinessVerified(businessId, true)
-      toast.success("Business verified.")
+      notify.success("Business verified.")
       await loadDashboard()
     } catch (err) {
-      toast.error(err.message || "Failed to verify business.")
+      notify.error(err.message || "Failed to verify business.")
     } finally {
       setPendingAction("")
     }
@@ -185,10 +185,10 @@ export function AdminDashboard() {
 
     try {
       await adminApi.updateQualification(qualificationId, { status })
-      toast.success(`Qualification ${status}.`)
+      notify.success(`Qualification ${status}.`)
       await loadDashboard()
     } catch (err) {
-      toast.error(err.message || `Failed to mark qualification as ${status}.`)
+      notify.error(err.message || `Failed to mark qualification as ${status}.`)
     } finally {
       setPendingAction("")
     }
@@ -200,10 +200,10 @@ export function AdminDashboard() {
 
     try {
       await adminApi.setUserSuspended(userId, false)
-      toast.success("User unsuspended.")
+      notify.success("User unsuspended.")
       await loadDashboard()
     } catch (err) {
-      toast.error(err.message || "Failed to unsuspend user.")
+      notify.error(err.message || "Failed to unsuspend user.")
     } finally {
       setPendingAction("")
     }
@@ -215,10 +215,10 @@ export function AdminDashboard() {
 
     try {
       await adminApi.updatePositionType(positionTypeId, { hidden: false })
-      toast.success("Position type is now visible.")
+      notify.success("Position type is now visible.")
       await loadDashboard()
     } catch (err) {
-      toast.error(err.message || "Failed to update position type visibility.")
+      notify.error(err.message || "Failed to update position type visibility.")
     } finally {
       setPendingAction("")
     }

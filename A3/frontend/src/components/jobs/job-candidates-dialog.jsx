@@ -170,7 +170,13 @@ export function JobCandidatesDialog({ open, onOpenChange, job, onDataChanged, on
       await load()
       await onDataChanged?.()
     } catch (actionError) {
-      setError(actionError.message || "Unable to update invitation.")
+      if (actionError?.status === 403 && actionError?.payload?.code === "not_discoverable") {
+        await load()
+        const issue = actionError?.payload?.issues?.[0]
+        setError(issue?.message || "This candidate is no longer discoverable. The candidate lists were refreshed.")
+      } else {
+        setError(actionError.message || "Unable to update invitation.")
+      }
     } finally {
       setBusyKey("")
     }
@@ -326,8 +332,16 @@ export function JobCandidatesDialog({ open, onOpenChange, job, onDataChanged, on
                       ) : (
                         <span className="text-xs text-muted-foreground">Negotiation is unavailable because this job is no longer open.</span>
                       )
+                    ) : isJobOpen ? (
+                      <Button
+                        variant="outline"
+                        disabled={busyKey === `invite-${interest.user.id}`}
+                        onClick={() => handleInviteToggle(interest.user, true)}
+                      >
+                        Invite
+                      </Button>
                     ) : (
-                      <span className="text-xs text-muted-foreground">We will notify both sides automatically when this match is ready to negotiate.</span>
+                      <span className="text-xs text-muted-foreground">This candidate is interested, but the job is no longer open.</span>
                     )}
                   </CandidateRow>
                 ))}

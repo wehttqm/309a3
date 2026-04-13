@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { toast } from "sonner"
+import { notify } from "@/lib/notify"
 import { ActivationLinkCard } from "@/components/auth/activation-link-card"
 
 export const BusinessRegister = () => {
@@ -74,7 +74,7 @@ export const BusinessRegister = () => {
         },
       })
       setCreatedAccount(created)
-      toast.success("Business account created. Use the activation link to activate it.")
+      notify.success("Business account created. Use the activation link to activate it.")
     } catch (err) {
       setError(err.message || "Unable to register business.")
     } finally {

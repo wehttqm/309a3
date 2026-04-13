@@ -1,5 +1,6 @@
 const { prisma } = require("../../../../../../utils/prisma_client.js");
 const {
+  getDiscoverabilityIssues,
   isDiscoverable,
 } = require("../../../../../../utils/is_discoverable.js");
 
@@ -50,12 +51,19 @@ const PATCH = async (req, res) => {
     const availabilityTimeoutMs =
       Number(availabilityTimeoutSetting.value) * 1000;
 
-    if (!isDiscoverable(user, now, availabilityTimeoutMs, {
+    const discoverabilityIssues = getDiscoverabilityIssues(user, now, availabilityTimeoutMs, {
       positionTypeId: job.positionTypeId,
       jobStartTime: job.startTime,
       jobEndTime: job.endTime,
-    })) {
-      return res.status(403).json({ error: "User is no longer discoverable." });
+    });
+
+    if (discoverabilityIssues.length > 0) {
+      return res.status(403).json({
+        error: "User is no longer discoverable.",
+        code: "not_discoverable",
+        reason: discoverabilityIssues[0].code,
+        issues: discoverabilityIssues,
+      });
     }
 
     // Find existing interest

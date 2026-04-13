@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { toast } from "sonner"
+import { notify } from "@/lib/notify"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -41,7 +41,7 @@ function SettingCard({
         const message = err.message || "Failed to load current setting."
         if (!ignore) {
           setError(message)
-          toast.error(message)
+          notify.error(message)
         }
       } finally {
         if (!ignore) {
@@ -65,14 +65,14 @@ function SettingCard({
     if (value === "" || Number.isNaN(parsedValue)) {
       const message = "Enter a valid number."
       setError(message)
-      toast.error(message)
+      notify.error(message)
       return
     }
 
     const validationError = validate?.(parsedValue)
     if (validationError) {
       setError(validationError)
-      toast.error(validationError)
+      notify.error(validationError)
       return
     }
 
@@ -83,11 +83,11 @@ function SettingCard({
       const nextValue = response[field]
       setSuccessValue(nextValue)
       setValue("")
-      toast.success(`${title} updated to ${nextValue}.`)
+      notify.success(`${title} updated to ${nextValue}.`)
     } catch (err) {
       const message = err.message || "Failed to update setting."
       setError(message)
-      toast.error(message)
+      notify.error(message)
     } finally {
       setIsSaving(false)
     }

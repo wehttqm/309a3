@@ -24,7 +24,7 @@ import {
 
 // Icons
 import { Pencil, Check, X, Camera, Upload, UserRoundCheck } from "lucide-react"
-import { toast } from "sonner"
+import { notify } from "@/lib/notify"
 
 function getNestedValue(obj: any, path: string) {
   return path.split(".").reduce((acc, key) => acc?.[key], obj)
@@ -118,7 +118,7 @@ export function Profile({
       }
 
       await refreshUser()
-      toast.success("Profile updated.")
+      notify.success("Profile updated.")
       setIsEditing(false)
     } catch (err: any) {
       setError(err?.message || "Failed to update profile.")
@@ -186,7 +186,7 @@ export function Profile({
 
     try {
       const response = await availabilityApi.updateMine(nextAvailable)
-      toast.success(response?.message || (nextAvailable ? "Matching is now on." : "Matching is now paused."))
+      notify.success(response?.message || (nextAvailable ? "Matching is now on." : "Matching is now paused."))
       await refreshUser()
     } catch (err: any) {
       setError(err?.message || "Failed to update availability.")

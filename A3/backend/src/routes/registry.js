@@ -94,6 +94,7 @@ const routeDefinitions = [
     "updateLastActive",
   ),
   defineRoute("/users/me/available", "PATCH", "strictAuth", "checkRoleRegular", "updateLastActive"),
+  defineRoute("/users/me/ping", "POST", "strictAuth", "checkRoleRegular"),
   defineRoute("/users/me/invitations", "GET", "strictAuth", "checkRoleRegular", "updateLastActive"),
   defineRoute("/users/me/interests", "GET", "strictAuth", "checkRoleRegular", "updateLastActive"),
   defineRoute("/users/me/jobs", "GET", "strictAuth", "checkRoleRegular", "updateLastActive"),

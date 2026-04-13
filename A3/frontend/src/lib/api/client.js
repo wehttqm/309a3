@@ -198,6 +198,10 @@ export const availabilityApi = {
     }),
 }
 
+export const regularActivityApi = {
+  ping: () => requestJson("/users/me/ping", { method: "POST" }),
+}
+
 export const dashboardApi = {
   getRegularDashboard: () => requestJson("/users/me/dashboard"),
   getBusinessDashboard: () => requestJson("/businesses/me/dashboard"),

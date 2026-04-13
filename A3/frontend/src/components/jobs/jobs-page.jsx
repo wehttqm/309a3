@@ -1,5 +1,7 @@
+import { notify } from "@/lib/notify"
 import { useEffect, useMemo, useState } from "react"
 import { apiClient } from "@/lib/api/client"
+import { getNegotiationStartErrorMessage, getRegularNegotiationBlockReason } from "@/lib/negotiation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -483,7 +485,7 @@ function FiltersCard({
 }
 
 export function JobsPage({ role, mode, startCreateOpen = false }) {
-  const { user } = useAuth()
+  const { user, refreshUser } = useAuth()
   const { openNegotiation } = useSocket()
   const [items, setItems] = useState([])
   const [count, setCount] = useState(0)
@@ -619,6 +621,14 @@ export function JobsPage({ role, mode, startCreateOpen = false }) {
     )
 
   const handleStartNegotiation = (job) => {
+    const blockedReason = getRegularNegotiationBlockReason(user)
+    if (blockedReason) {
+      setError(blockedReason)
+      notify.error(blockedReason)
+      refreshUser?.()
+      return
+    }
+
     const currentUserName = `${user?.first_name || ""} ${user?.last_name || ""}`.trim() || user?.name || "You"
 
     setPendingNegotiationJob({
@@ -652,14 +662,15 @@ export function JobsPage({ role, mode, startCreateOpen = false }) {
     setError("")
 
     try {
-      await apiClient.postNegotiations({
+      const negotiation = await apiClient.postNegotiations({
         body: { interest_id: pendingNegotiationJob.interestId },
       })
       setPendingNegotiationJob(null)
-      await load(page)
-      openNegotiation()
+      await Promise.allSettled([load(page), refreshUser?.()])
+      openNegotiation(negotiation)
     } catch (actionError) {
-      setError(actionError.message || "Unable to start negotiation.")
+      setError(getNegotiationStartErrorMessage(actionError, user))
+      await Promise.allSettled([load(page), refreshUser?.()])
     } finally {
       setBusyId(null)
       setIsStartingNegotiation(false)

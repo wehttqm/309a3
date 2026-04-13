@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { toast } from "sonner"
+import { notify } from "@/lib/notify"
 import {
   ArrowRight,
   Briefcase,
@@ -28,6 +28,7 @@ import { formatDateTime, formatSalaryRange, isJobNegotiable } from "@/components
 import { useAuth } from "@/context/auth-context"
 import { useSocket } from "@/context/socket-context"
 import { apiClient, availabilityApi, dashboardApi } from "@/lib/api/client"
+import { getNegotiationStartErrorMessage, getRegularNegotiationBlockReason } from "@/lib/negotiation"
 
 function statusVariant(value) {
   switch (value) {
@@ -161,10 +162,10 @@ export function RegularDashboard() {
 
     try {
       await availabilityApi.updateMine(nextAvailable)
-      toast.success(nextAvailable ? "Matching is now on." : "Matching is now paused.")
+      notify.success(nextAvailable ? "Matching is now on." : "Matching is now paused.")
       await Promise.all([loadDashboard(), refreshUser()])
     } catch (err) {
-      toast.error(err.message || "Failed to update your status.")
+      notify.error(err.message || "Failed to update your status.")
     } finally {
       setIsUpdatingStatus(false)
     }
@@ -173,6 +174,14 @@ export function RegularDashboard() {
 
   const handleStartNegotiation = (interest) => {
     if (!interest?.mutual || !interest?.interest_id || !isJobNegotiable(interest?.job)) return
+
+    const blockedReason = getRegularNegotiationBlockReason(user)
+    if (blockedReason) {
+      notify.error(blockedReason)
+      refreshUser()
+      loadDashboard()
+      return
+    }
 
     setPendingNegotiation({
       interestId: interest.interest_id,
@@ -202,13 +211,14 @@ export function RegularDashboard() {
 
     setIsStartingNegotiation(true)
     try {
-      await apiClient.postNegotiations({ body: { interest_id: pendingNegotiation.interestId } })
+      const negotiation = await apiClient.postNegotiations({ body: { interest_id: pendingNegotiation.interestId } })
       setPendingNegotiation(null)
       await loadDashboard()
       await refreshUser()
-      openNegotiation()
+      openNegotiation(negotiation)
     } catch (err) {
-      toast.error(err.message || "Unable to start negotiation.")
+      notify.error(getNegotiationStartErrorMessage(err, user))
+      await Promise.allSettled([loadDashboard(), refreshUser()])
     } finally {
       setIsStartingNegotiation(false)
     }

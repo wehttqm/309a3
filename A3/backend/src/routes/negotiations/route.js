@@ -1,6 +1,6 @@
 const { Prisma } = require("@prisma/client");
 const { prisma } = require("../../utils/prisma_client.js");
-const { isDiscoverable } = require("../../utils/is_discoverable.js");
+const { getDiscoverabilityIssues, isDiscoverable } = require("../../utils/is_discoverable.js");
 const { get_io } = require("../../utils/socket_state.js");
 const {
   describeBlockingNegotiation,
@@ -277,11 +277,17 @@ const POST = async (req, res) => {
       }
 
       if (!interest.candidateInterested || !interest.businessInterested) {
-        return res.status(403).json({ error: "Interest is not mutual." });
+        return res.status(403).json({
+          error: "Interest is not mutual.",
+          code: "interest_not_mutual",
+        });
       }
 
       if (interest.job.status !== "open") {
-        return res.status(409).json({ error: "Job is no longer available for negotiation." });
+        return res.status(409).json({
+          error: "Job is no longer available for negotiation.",
+          code: "job_not_open",
+        });
       }
 
       const availabilityTimeoutSetting = await prisma.systemSetting.findUnique({
@@ -300,14 +306,25 @@ const POST = async (req, res) => {
         filledJobs: conflictingJobs,
       };
 
-      if (
-        !isDiscoverable(userForDiscoverability, now, availabilityTimeoutMs, {
+      const discoverabilityIssues = getDiscoverabilityIssues(
+        userForDiscoverability,
+        now,
+        availabilityTimeoutMs,
+        {
           positionTypeId: interest.job.positionTypeId,
           jobStartTime: interest.job.startTime,
           jobEndTime: interest.job.endTime,
-        })
-      ) {
-        return res.status(403).json({ error: "Regular user is not discoverable." });
+        },
+      );
+
+      if (discoverabilityIssues.length > 0) {
+        return res.status(403).json({
+          error: discoverabilityIssues[0].message,
+          code: "not_discoverable",
+          details: {
+            reasons: discoverabilityIssues,
+          },
+        });
       }
 
       const [candidateActiveNegotiation, businessActiveNegotiation, jobActiveNegotiation] =
@@ -323,6 +340,7 @@ const POST = async (req, res) => {
       if (blockingNegotiation) {
         return res.status(409).json({
           error: "One or both parties are already in an active negotiation.",
+          code: "active_negotiation_block",
           blocking: describeBlockingNegotiation(blockingNegotiation, now),
         });
       }

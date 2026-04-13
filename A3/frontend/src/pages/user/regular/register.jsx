@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { toast } from "sonner"
+import { notify } from "@/lib/notify"
 import { ActivationLinkCard } from "@/components/auth/activation-link-card"
 
 export const RegularRegister = () => {
@@ -67,7 +67,7 @@ export const RegularRegister = () => {
         birthday: form.birthday || undefined,
       })
       setCreatedAccount(created)
-      toast.success("Account created. Use the activation link to activate it.")
+      notify.success("Account created. Use the activation link to activate it.")
     } catch (err) {
       setError(err.message || "Unable to register.")
     } finally {

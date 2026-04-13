@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react"
-import { toast } from "sonner"
+import { notify } from "@/lib/notify"
 
 import { JobCard } from "@/components/jobs/job-card"
 import { formatDateTime, formatSalaryRange, jobStatusVariant } from "@/components/jobs/job-utils"
 import { useAuth } from "@/context/auth-context"
 import { apiClient } from "@/lib/api/client"
+import { getNegotiationStartErrorMessage, getRegularNegotiationBlockReason } from "@/lib/negotiation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { UserAvatar } from "@/components/user-avatar"
@@ -269,7 +270,7 @@ export const RegularMyJobsPage = () => {
     } catch (err) {
       const message = err.message || "Failed to load your interested jobs."
       setError(message)
-      toast.error(message)
+      notify.error(message)
     } finally {
       setIsLoadingInterests(false)
     }
@@ -290,7 +291,7 @@ export const RegularMyJobsPage = () => {
     } catch (err) {
       const message = err.message || "Failed to load your invitations."
       setError(message)
-      toast.error(message)
+      notify.error(message)
     } finally {
       setIsLoadingInvitations(false)
     }
@@ -312,7 +313,7 @@ export const RegularMyJobsPage = () => {
     } catch (err) {
       const message = err.message || "Failed to load your job history."
       setError(message)
-      toast.error(message)
+      notify.error(message)
     } finally {
       setIsLoadingCommittedJobs(false)
     }
@@ -327,7 +328,7 @@ export const RegularMyJobsPage = () => {
       if (err?.status === 404) {
         setActiveNegotiation(null)
       } else {
-        toast.error(err.message || "Failed to load active negotiation.")
+        notify.error(err.message || "Failed to load active negotiation.")
       }
     } finally {
       setIsLoadingNegotiation(false)
@@ -365,18 +366,24 @@ export const RegularMyJobsPage = () => {
     ])
   }
 
-  const actOnJob = async (jobId, action, successMessage) => {
+  const actOnJob = async (jobId, action, successMessage, useNegotiationMessages = false) => {
     setBusyJobId(jobId)
     setError("")
 
     try {
       await action()
-      toast.success(successMessage)
+      notify.success(successMessage)
       await reloadLists()
     } catch (err) {
-      const message = err.message || "Unable to update this job."
+      const message = useNegotiationMessages
+        ? getNegotiationStartErrorMessage(err, user)
+        : err.message || "Unable to update this job."
       setError(message)
-      toast.error(message)
+      notify.error(message)
+      await refreshUser()
+      if (useNegotiationMessages) {
+        await Promise.allSettled([loadInterests(), loadInvitations(), loadNegotiation()])
+      }
     } finally {
       setBusyJobId(null)
     }
@@ -404,15 +411,25 @@ export const RegularMyJobsPage = () => {
       "Interest withdrawn.",
     )
 
-  const handleStartNegotiation = (job) =>
-    actOnJob(
+  const handleStartNegotiation = async (job) => {
+    const blockedReason = getRegularNegotiationBlockReason(user)
+    if (blockedReason) {
+      setError(blockedReason)
+      notify.error(blockedReason)
+      await refreshUser()
+      return
+    }
+
+    return actOnJob(
       job.id,
       () =>
         apiClient.postNegotiations({
           body: { interest_id: job.interest_id },
         }),
       "Negotiation started.",
+      true,
     )
+  }
 
 
   const handleDecision = async (negotiationId, decision) => {
@@ -421,10 +438,10 @@ export const RegularMyJobsPage = () => {
       await apiClient.patchNegotiationsMeDecision({
         body: { negotiation_id: negotiationId, decision },
       })
-      toast.success(`Negotiation ${decision === "accept" ? "updated" : "declined"}.`)
+      notify.success(`Negotiation ${decision === "accept" ? "updated" : "declined"}.`)
       await reloadLists()
     } catch (err) {
-      toast.error(err.message || "Failed to update negotiation.")
+      notify.error(err.message || "Failed to update negotiation.")
     } finally {
       setDecisionBusy(false)
     }

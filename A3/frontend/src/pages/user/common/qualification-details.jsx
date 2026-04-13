@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { toast } from "sonner"
+import { notify } from "@/lib/notify"
 
 function formatDateTime(value) {
   if (!value) return "—"
@@ -66,7 +66,7 @@ export const QualificationDetailsPage = () => {
       setQualification(data)
       setNoteDraft(data.note || "")
     } catch (err) {
-       toast.error(err.message || "Failed to update qualification.")
+       notify.error(err.message || "Failed to update qualification.")
     } finally {
       setIsLoading(false)
     }
@@ -105,9 +105,9 @@ export const QualificationDetailsPage = () => {
       await qualificationApi.uploadDocument(Number(qualificationId), { file: selectedFile })
       setSelectedFile(null)
       await loadQualification()
-      toast.success("Qualification document uploaded.")
+      notify.success("Qualification document uploaded.")
     } catch (err) {
-      toast.error(err.message || "Failed to upload qualification document.")
+      notify.error(err.message || "Failed to upload qualification document.")
     } finally {
       setIsUploadingDocument(false)
     }

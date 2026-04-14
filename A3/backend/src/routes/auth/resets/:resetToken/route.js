@@ -2,7 +2,7 @@ const { prisma } = require("../../../../utils/prisma_client.js");
 const bcrypt = require("bcrypt");
 
 const POST = async (req, res) => {
-  const { resetToken } = req.params;
+  const { token } = req.params;
   const { email, password } = req.body;
 
   if (!email || !resetToken) {
@@ -15,7 +15,7 @@ const POST = async (req, res) => {
     const user = await prisma.user.findFirst({
       where: {
         email: normalizedEmail,
-        resetToken,
+        resetToken: token,
       },
     });
 

@@ -1,48 +1,48 @@
 const { prisma } = require("../../../../utils/prisma_client.js");
+const bcrypt = require("bcrypt");
 
 const POST = async (req, res) => {
   const { resetToken } = req.params;
   const { email, password } = req.body;
 
-  if (!email) {
-    res.status(400).json({ error: "Missing email in body." });
-    return;
+  if (!email || !resetToken) {
+    return res.status(400).json({ error: "Missing email or reset token." });
   }
 
+  const normalizedEmail = email.trim().toLowerCase();
+
   try {
-    const user = await prisma.user.findUnique({
-      where: { email },
+    const user = await prisma.user.findFirst({
+      where: {
+        email: normalizedEmail,
+        resetToken,
+      },
     });
 
-    if (!user || user.resetToken === "") {
-      return res
-        .status(404)
-        .json({ error: "Reset token not found or already used." });
+    if (!user) {
+      return res.status(404).json({ error: "Invalid reset token or email." });
     }
 
-    if (new Date() > user.expiresAt) {
+    if (!user.expiresAt || new Date() > user.expiresAt) {
       return res.status(410).json({ error: "Reset token has expired." });
-    }
-
-    if (user.email !== normalizedEmail) {
-      return res
-        .status(401)
-        .json({ error: "Email does not match the provided token." });
     }
 
     const updateData = {
       activated: true,
-      resetToken: "",
-      expiresAt: new Date(0),
-      ...(password ? { password } : {}),
+      resetToken: null,
+      expiresAt: null,
     };
+
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 10);
+    }
 
     await prisma.user.update({
       where: { id: user.id },
       data: updateData,
     });
 
-    return res.status(200).json({ message: "Account processed successfully." });
+    return res.status(200).json({ message: "Account updated successfully." });
   } catch (error) {
     console.error("Auth Reset Error:", error);
     return res.status(500).json({ error: "Internal server error." });

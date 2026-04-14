@@ -5,7 +5,7 @@ const POST = async (req, res) => {
   const { token } = req.params;
   const { email, password } = req.body;
 
-  if (!email || !resetToken) {
+  if (!email || !token) {
     return res.status(400).json({ error: "Missing email or reset token." });
   }
 

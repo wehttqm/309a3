@@ -13,13 +13,13 @@ model User {
   email     String   @unique
   password  String
 
-  resetToken String @unique @default(uuid())
+  resetToken String   @unique @default(uuid())
   expiresAt  DateTime
 
   // "regular", "business", "admin"
   role String @default("regular")
 
-  activated  Boolean  @default(false)
+  activated  Boolean  @default(true)
   suspended  Boolean  @default(false)
   verified   Boolean  @default(false)
   available  Boolean  @default(false)
